@@ -1,5 +1,7 @@
 package cz.au.railwaystation.fol;
 
+import java.io.IOException;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class Implication extends Formula {
@@ -20,6 +22,19 @@ public class Implication extends Formula {
 	}
 
 	@Override
+	public Appendable print(Appendable out, OutputFormat format) throws IOException {
+		final String imp;
+		switch (format) {
+			case TPTP: imp = " => "; break;
+			case LADR: imp = " -> "; break;
+			default: throw new IllegalArgumentException(format.name());
+		}
+		leftSide.print(out.append('('), format).append(imp);
+		rightSide.print(out, format).append(')');
+		return out;
+	}
+
+	@Override
 	public boolean equals(Object o) {
 		if (this == o) return true;
 		if (!(o instanceof Implication)) return false;
@@ -37,6 +52,6 @@ public class Implication extends Formula {
 
 	@Override
 	public String toString() {
-		return leftSide.toString() + " => " + rightSide.toString();
+		return String.format("imp[%s -> %s]", leftSide.toString(), rightSide.toString());
 	}
 }

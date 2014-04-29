@@ -4,11 +4,11 @@ import java.io.IOException;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class Equality extends Formula {
+public class NonEquality extends Formula {
 
 	private final Term leftSide, rightSide;
 
-	public Equality(Term leftSide, Term rightSide) {
+	public NonEquality(Term leftSide, Term rightSide) {
 		this.leftSide = checkNotNull(leftSide);
 		this.rightSide = checkNotNull(rightSide);
 	}
@@ -23,7 +23,7 @@ public class Equality extends Formula {
 
 	@Override
 	public Appendable print(Appendable out, OutputFormat format) throws IOException {
-		leftSide.print(out.append('('), format).append(" = ");
+		leftSide.print(out.append('('), format).append(" != ");
 		rightSide.print(out, format).append(')');
 		return out;
 	}
@@ -31,10 +31,10 @@ public class Equality extends Formula {
 	@Override
 	public boolean equals(Object o) {
 		if (this == o) return true;
-		if (!(o instanceof Equality)) return false;
+		if (!(o instanceof NonEquality)) return false;
 
-		final Equality equality = (Equality) o;
-		return leftSide.equals(equality.leftSide) && rightSide.equals(equality.rightSide);
+		final NonEquality nonEquality = (NonEquality) o;
+		return leftSide.equals(nonEquality.leftSide) && rightSide.equals(nonEquality.rightSide);
 	}
 
 	@Override
@@ -46,6 +46,6 @@ public class Equality extends Formula {
 
 	@Override
 	public String toString() {
-		return String.format("eq[%s = %s]", leftSide.toString(), rightSide.toString());
+		return String.format("neq[%s != %s]", leftSide.toString(), rightSide.toString());
 	}
 }

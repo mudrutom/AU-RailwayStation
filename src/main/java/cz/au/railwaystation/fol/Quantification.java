@@ -1,5 +1,6 @@
 package cz.au.railwaystation.fol;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
@@ -26,21 +27,25 @@ public class Quantification extends Formula {
 		return formula;
 	}
 
-	public Quantification forAll(Variable variable) {
-		checkNotNull(variable);
-		checkArgument(!general.contains(variable));
-		checkArgument(!existential.contains(variable));
-		variables.add(variable);
-		general.add(variable);
+	public Quantification forAll(Variable... allVars) {
+		checkNotNull(allVars);
+		for (Variable variable : allVars) {
+			checkNotNull(variable);
+			checkArgument(!general.contains(variable) && !existential.contains(variable));
+			variables.add(variable);
+			general.add(variable);
+		}
 		return this;
 	}
 
-	public Quantification exists(Variable variable) {
-		checkNotNull(variable);
-		checkArgument(!general.contains(variable));
-		checkArgument(!existential.contains(variable));
-		variables.add(variable);
-		existential.add(variable);
+	public Quantification exists(Variable... existsVars) {
+		checkNotNull(existsVars);
+		for (Variable variable : existsVars) {
+			checkNotNull(variable);
+			checkArgument(!general.contains(variable) && !existential.contains(variable));
+			variables.add(variable);
+			existential.add(variable);
+		}
 		return this;
 	}
 
@@ -57,12 +62,41 @@ public class Quantification extends Formula {
 	}
 
 	@Override
+	public Appendable print(Appendable out, OutputFormat format) throws IOException {
+		final String all, exists;
+		switch (format) {
+			case TPTP:
+				all = "![%s]: ";
+				exists = "?[%s]: ";
+				break;
+			case LADR:
+				all = "all %s ";
+				exists = "exists %s ";
+				break;
+			default: throw new IllegalArgumentException(format.name());
+		}
+
+		out.append('(');
+		final StringBuilder sb = new StringBuilder();
+		for (Variable variable : variables) {
+			String var = variable.print(sb.delete(0, sb.length()), format).toString();
+			if (general.contains(variable)) {
+				out.append(String.format(all, var));
+			}
+			if (existential.contains(variable)) {
+				out.append(String.format(exists, var));
+			}
+		}
+		return formula.print(out, format).append(')');
+	}
+
+	@Override
 	public boolean equals(Object o) {
 		if (this == o) return true;
 		if (!(o instanceof Quantification)) return false;
 
-		final Quantification that = (Quantification) o;
-		return formula.equals(that.formula) && variables.equals(that.variables);
+		final Quantification quantification = (Quantification) o;
+		return formula.equals(quantification.formula) && variables.equals(quantification.variables);
 	}
 
 	@Override
@@ -74,15 +108,15 @@ public class Quantification extends Formula {
 
 	@Override
 	public String toString() {
-		final StringBuilder sb = new StringBuilder("(");
+		final StringBuilder sb = new StringBuilder();
 		for (Variable variable : variables) {
 			if (general.contains(variable)) {
-				sb.append("all ").append(variable).append(' ');
+				sb.append("all_").append(variable.toString()).append(' ');
 			}
 			if (existential.contains(variable)) {
-				sb.append(" exists ").append(variable).append(' ');
+				sb.append("ex_").append(variable.toString()).append(' ');
 			}
 		}
-		return sb.append(formula).append(')').toString();
+		return sb.append(formula.toString()).toString();
 	}
 }

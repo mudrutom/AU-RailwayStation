@@ -1,6 +1,8 @@
 package cz.au.railwaystation.fol;
 
+import java.io.IOException;
 import java.util.Arrays;
+import java.util.Iterator;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -18,7 +20,6 @@ public class Function extends Term {
 		checkArgument(arity > 0);
 	}
 
-	@Override
 	public String getName() {
 		return name;
 	}
@@ -42,6 +43,15 @@ public class Function extends Term {
 	}
 
 	@Override
+	public Appendable print(Appendable out, OutputFormat format) throws IOException {
+		out.append(name.toLowerCase().replaceAll("[\\s]", "_")).append('(');
+		for (Iterator<Term> i = Arrays.asList(args).iterator(); i.hasNext(); ) {
+			i.next().print(out, format).append(i.hasNext() ? ", " : ")");
+		}
+		return out;
+	}
+
+	@Override
 	public boolean equals(Object o) {
 		if (this == o) return true;
 		if (!(o instanceof Function)) return false;
@@ -60,11 +70,11 @@ public class Function extends Term {
 
 	@Override
 	public String toString() {
-		final StringBuilder sb = new StringBuilder(name).append('(');
-		for (Term term : args) {
-			sb.append(term).append(", ");
+		final StringBuilder sb = new StringBuilder();
+		sb.append("fn[").append(name).append('(');
+		for (Iterator<Term> i = Arrays.asList(args).iterator(); i.hasNext(); ) {
+			sb.append(i.next().toString()).append(i.hasNext() ? ", " : ")");
 		}
-		sb.delete(sb.length() - 2, sb.length());
-		return sb.append(')').toString();
+		return sb.append(']').toString();
 	}
 }

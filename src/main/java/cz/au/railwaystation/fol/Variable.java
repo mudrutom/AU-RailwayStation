@@ -1,5 +1,7 @@
 package cz.au.railwaystation.fol;
 
+import java.io.IOException;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class Variable extends Term {
@@ -10,9 +12,13 @@ public class Variable extends Term {
 		this.name = checkNotNull(name);
 	}
 
-	@Override
 	public String getName() {
 		return name;
+	}
+
+	@Override
+	public Appendable print(Appendable out, OutputFormat format) throws IOException {
+		return out.append(name.toUpperCase().replaceAll("[\\s]", "_"));
 	}
 
 	@Override
@@ -31,6 +37,6 @@ public class Variable extends Term {
 
 	@Override
 	public String toString() {
-		return name;
+		return String.format("var[%s]", name);
 	}
 }

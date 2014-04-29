@@ -1,5 +1,7 @@
 package cz.au.railwaystation.fol;
 
+import java.io.IOException;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class Negation extends Formula {
@@ -12,6 +14,17 @@ public class Negation extends Formula {
 
 	public Formula getFormula() {
 		return formula;
+	}
+
+	@Override
+	public Appendable print(Appendable out, OutputFormat format) throws IOException {
+		final char neg;
+		switch (format) {
+			case TPTP: neg = '~'; break;
+			case LADR: neg = '-'; break;
+			default: throw new IllegalArgumentException(format.name());
+		}
+		return formula.print(out.append(neg), format);
 	}
 
 	@Override
@@ -30,6 +43,6 @@ public class Negation extends Formula {
 
 	@Override
 	public String toString() {
-		return "-" + formula.toString();
+		return String.format("neg[%s]", formula);
 	}
 }

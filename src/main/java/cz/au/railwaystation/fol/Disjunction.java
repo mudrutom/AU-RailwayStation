@@ -1,7 +1,7 @@
 package cz.au.railwaystation.fol;
 
+import java.io.IOException;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -16,15 +16,29 @@ public class Disjunction extends Formula implements Iterable<Formula> {
 	}
 
 	public Disjunction(List<Formula> formulas) {
-		this.formulas = Collections.unmodifiableList(checkNotNull(formulas));
+		this.formulas = checkNotNull(formulas);
 	}
 
 	public List<Formula> getFormulas() {
 		return formulas;
 	}
 
+	public Disjunction add(Formula formula) {
+		formulas.add(checkNotNull(formula));
+		return this;
+	}
+
 	public int size() {
 		return formulas.size();
+	}
+
+	@Override
+	public Appendable print(Appendable out, OutputFormat format) throws IOException {
+		out.append('(');
+		for (Iterator<Formula> i = iterator(); i.hasNext(); ) {
+			i.next().print(out, format).append(i.hasNext() ? " | " : ")");
+		}
+		return out;
 	}
 
 	@Override
@@ -48,11 +62,10 @@ public class Disjunction extends Formula implements Iterable<Formula> {
 
 	@Override
 	public String toString() {
-		final StringBuilder sb = new StringBuilder();
-		for (Formula formula : this) {
-			sb.append(formula).append(" | ");
+		final StringBuilder sb = new StringBuilder().append("or[");
+		for (Iterator<Formula> i = iterator(); i.hasNext(); ) {
+			sb.append(i.next().toString()).append(i.hasNext() ? " | " : "]");
 		}
-		sb.delete(sb.length() - 3, sb.length());
 		return sb.toString();
 	}
 }

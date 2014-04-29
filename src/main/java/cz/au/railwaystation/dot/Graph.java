@@ -23,6 +23,7 @@ public class Graph implements Iterable<Node> {
 	}
 
 	public Node getNode(String name) {
+		checkNotNull(name);
 		Node node = nodes.get(name);
 		if (node == null) {
 			node = new Node(name);
@@ -32,8 +33,8 @@ public class Graph implements Iterable<Node> {
 	}
 
 	public Graph edge(String fromNode, String toNode) {
-		final Node from = getNode(checkNotNull(fromNode));
-		final Node to = getNode(checkNotNull(toNode));
+		final Node from = getNode(fromNode);
+		final Node to = getNode(toNode);
 		from.addChild(to);
 		to.addParent(from);
 		isAnalyzed = false;
