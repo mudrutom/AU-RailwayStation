@@ -19,7 +19,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-import static cz.au.railwaystation.fol.Builder.*;
+import static cz.au.railwaystation.fol.Factory.*;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 

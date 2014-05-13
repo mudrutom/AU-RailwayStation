@@ -1,8 +1,8 @@
 package cz.au.railwaystation.fol;
 
-public class Builder {
+public class Factory {
 
-	private Builder() {}
+	private Factory() {}
 
 	public static Variable var(String name) {
 		return new Variable(name);
