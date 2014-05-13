@@ -1,7 +1,9 @@
 package cz.au.railwaystation;
 
 import cz.au.railwaystation.dot.Graph;
-import cz.au.railwaystation.dot.Parser;
+import cz.au.railwaystation.dot.GraphPaths;
+import cz.au.railwaystation.dot.GraphUtil;
+import cz.au.railwaystation.dot.Node;
 import cz.au.railwaystation.fol.Constant;
 import cz.au.railwaystation.fol.Formula;
 import cz.au.railwaystation.fol.OutputFormat;
@@ -13,8 +15,12 @@ import org.junit.runners.JUnit4;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 import static cz.au.railwaystation.fol.Builder.*;
+import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 
 @RunWith(JUnit4.class)
@@ -43,16 +49,43 @@ public class Tests {
 	@Test
 	public void testParser() throws IOException {
 		final BufferedReader input = new BufferedReader(new StringReader(GRAPH));
-		final Graph result = Parser.parse(input);
+		final Graph result = GraphUtil.parseGraph(input);
 
 		// build the graph
-		final Graph graph = new Graph();
-		graph
+		final Graph graph = new Graph()
 			.edge("in", "v")
 			.edge("v", "out1")
 			.edge("v", "out2");
 
 		assertEquals(graph, result);
+	}
+
+	@Test
+	public void testPathFinding() {
+		final Graph graph = new Graph()
+			.edge("in1", "v1")
+			.edge("in1", "v2")
+			.edge("in2", "v2")
+			.edge("v1", "out1")
+			.edge("v1", "out2")
+			.edge("v2", "out1")
+			.edge("v2", "out2");
+		final Node
+			in1 = graph.getNode("in1"), in2 = graph.getNode("in2"),
+			v1 = graph.getNode("v1"), v2 = graph.getNode("v2"),
+			out1 = graph.getNode("out1"), out2 = graph.getNode("out2");
+
+		final GraphPaths graphPaths = GraphUtil.findAllPaths(graph);
+		assertEquals(newSet(asList(in1, v1, out1), asList(in1, v2, out1)), graphPaths.getPaths(in1, out1));
+		assertEquals(newSet(asList(in1, v1, out2), asList(in1, v2, out2)), graphPaths.getPaths(in1, out2));
+		assertEquals(newSet(asList(in2, v2, out1)), graphPaths.getPaths(in2, out1));
+		assertEquals(newSet(asList(in2, v2, out2)), graphPaths.getPaths(in2, out2));
+	}
+
+	private <T> Set<T> newSet(T... elements) {
+		final HashSet<T> set = new HashSet<T>(elements.length);
+		Collections.addAll(set, elements);
+		return set;
 	}
 
 	@Test
