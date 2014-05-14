@@ -14,7 +14,7 @@ public class Main {
 		final BufferedReader input = new BufferedReader(new FileReader("example/station-1.dot"));
 		final ModelBuilder builder = new ModelBuilder(input, new File("example"));
 		builder.setFormat(OutputFormat.TPTP);
-		builder.createOrderAxioms();
+		builder.createStationLayoutAxioms();
 
 	}
 

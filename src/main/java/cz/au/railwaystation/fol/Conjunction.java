@@ -1,7 +1,8 @@
 package cz.au.railwaystation.fol;
 
+import com.google.common.collect.Lists;
+
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
@@ -12,7 +13,7 @@ public class Conjunction extends Formula implements Iterable<Formula> {
 	private final List<Formula> formulas;
 
 	public Conjunction(Formula... formulas) {
-		this(Arrays.asList(checkNotNull(formulas)));
+		this(Lists.newArrayList(checkNotNull(formulas)));
 	}
 
 	public Conjunction(List<Formula> formulas) {

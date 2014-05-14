@@ -40,8 +40,16 @@ public class Node {
 		return parents.isEmpty();
 	}
 
+	public boolean isJunction() {
+		return parents.size() > 1;
+	}
+
 	public boolean isSink() {
 		return children.isEmpty();
+	}
+
+	public boolean isSwitch() {
+		return children.size() > 1;
 	}
 
 	@Override
