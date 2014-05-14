@@ -2,7 +2,7 @@ package cz.au.railwaystation.fol;
 
 public class Factory {
 
-	private Factory() {}
+	protected Factory() {}
 
 	public static Variable var(String name) {
 		return new Variable(name);
