@@ -94,7 +94,7 @@ public class Tests {
 		final Constant a = con("a"), b = con("b"), c = con("c"), d = con("d");
 
 		final Formula formula1 = q(imp(and(pr("less", x, y), pr("less", y, x)), eq(x, y))).forAll(x, y);
-		formula1.setLabel("antisymmetry");
+		formula1.label("antisymmetry");
 
 		final String result1_tptp = formula1.printFormula(new StringBuilder(), OutputFormat.TPTP).toString();
 		assertEquals(FORMULA_1_TPTP, result1_tptp);
@@ -103,7 +103,7 @@ public class Tests {
 		assertEquals(FORMULA_1_LADR, result1_ladr);
 
 		final Formula formula2 = q(eqv(pr("is", x), neg(or(pr("is", a), pr("is", fn("fun", b, c)), pr("is", d))))).exists(x);
-		formula2.setLabel("testing");
+		formula2.label("testing");
 
 		final String result2_tptp = formula2.printFormula(new StringBuilder(), OutputFormat.TPTP).toString();
 		assertEquals(FORMULA_2_TPTP, result2_tptp);

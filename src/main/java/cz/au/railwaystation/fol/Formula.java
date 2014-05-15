@@ -12,20 +12,12 @@ public abstract class Formula {
 	private String label = null;
 	private String comment = null;
 
-	public String getLabel() {
-		return label;
-	}
-
-	public Formula setLabel(String label) {
+	public Formula label(String label) {
 		this.label = label;
 		return this;
 	}
 
-	public String getComment() {
-		return comment;
-	}
-
-	public Formula setComment(String comment) {
+	public Formula comment(String comment) {
 		this.comment = comment;
 		return this;
 	}

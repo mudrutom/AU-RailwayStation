@@ -1,5 +1,7 @@
 package cz.au.railwaystation;
 
+import cz.au.railwaystation.dot.Graph;
+import cz.au.railwaystation.dot.GraphUtil;
 import cz.au.railwaystation.fol.OutputFormat;
 
 import java.io.BufferedReader;
@@ -12,7 +14,10 @@ public class Main {
     public static void main(String[] args) throws IOException {
 
 		final BufferedReader input = new BufferedReader(new FileReader("example/station-1.dot"));
-		final ModelBuilder builder = new ModelBuilder(input, new File("example"));
+		final Graph graph = GraphUtil.parseGraph(input);
+		input.close();
+
+		final ModelBuilder builder = new ModelBuilder(graph, new File("example"));
 		builder.setFormat(OutputFormat.TPTP);
 		builder.createStationLayoutAxioms();
 
