@@ -4,15 +4,15 @@ import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class GraphPaths {
 
-	private Table<Node, Node, Set<List<Node>>> graphPaths;
+	private Table<Node, Node, Set<Path>> graphPaths;
 
 	public GraphPaths() {
 		graphPaths = HashBasedTable.create();
@@ -22,25 +22,32 @@ public class GraphPaths {
 		graphPaths = HashBasedTable.create(starts, ends);
 	}
 
-	public Set<List<Node>> getPaths(Node start, Node end) {
+	public Set<Path> getPaths(Node start, Node end) {
 		return graphPaths.get(start, end);
 	}
 
-	public void addPath(Node start, Node end, List<Node> path) {
+	public void addPath(Node start, Node end, Path path) {
 		checkNotNull(start); checkNotNull(end);
-		checkNotNull(path); checkArgument(!path.isEmpty());
+		checkNotNull(path);
 		if (!graphPaths.contains(start, end)) {
-			graphPaths.put(start, end, new HashSet<List<Node>>());
+			graphPaths.put(start, end, new HashSet<Path>());
 		}
-		final Set<List<Node>> paths = graphPaths.get(start, end);
+		final Set<Path> paths = graphPaths.get(start, end);
+		path.setIndex(paths.size());
 		paths.add(path);
 	}
 
-	public void addPath(List<Node> path) {
-		checkNotNull(path); checkArgument(!path.isEmpty());
-		final Node start = path.get(0);
-		final Node end = path.get(path.size() - 1);
-		addPath(start, end, path);
+	public void addPath(Path path) {
+		checkNotNull(path);
+		addPath(path.getStart(), path.getEnd(), path);
+	}
+
+	public List<Path> getAllPaths() {
+		final LinkedList<Path> paths = new LinkedList<Path>();
+		for (Set<Path> pathSet : graphPaths.values()) {
+			paths.addAll(pathSet);
+		}
+		return paths;
 	}
 
 	@Override
@@ -60,7 +67,7 @@ public class GraphPaths {
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
-		for (Table.Cell<Node, Node, Set<List<Node>>> cell : graphPaths.cellSet()) {
+		for (Table.Cell<Node, Node, Set<Path>> cell : graphPaths.cellSet()) {
 			sb.append(String.format("(%s->%s)=%s\n", cell.getRowKey(), cell.getColumnKey(), cell.getValue()));
 		}
 		return sb.toString();

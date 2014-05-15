@@ -6,6 +6,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -52,7 +53,7 @@ public class GraphUtil {
 		if (from.isSink()) {
 			if (from.equals(end)) {
 				// path leads to the end
-				graphPaths.addPath(path);
+				graphPaths.addPath(new Path(path));
 			}
 		} else {
 			final ArrayList<Node> pathHead = new ArrayList<Node>(path);
@@ -63,6 +64,21 @@ public class GraphUtil {
 				findAllPaths(children.next(), end, new LinkedList<Node>(pathHead), graphPaths);
 			}
 		}
+	}
+
+	public static Set<Path> getIntersectingPaths(GraphPaths graphPaths, Path path) {
+		final Set<Path> intersection = new LinkedHashSet<Path>();
+		for (Path other : graphPaths.getAllPaths()) {
+			for (Node node : path) {
+				if (other.contains(node)) {
+					intersection.add(other);
+					break;
+				}
+			}
+		}
+		// exclude the path itself
+		intersection.remove(path);
+		return intersection;
 	}
 
 }
