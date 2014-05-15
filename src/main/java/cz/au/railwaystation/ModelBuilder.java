@@ -55,7 +55,7 @@ public class ModelBuilder {
 		for (Node node : allNodes) {
 			cons.put(node, con(node.getName()));
 		}
-		final Variable x = var("x"), t = var("t"), n = var("n"), n1 = var("n1"), n2 = var("n2");
+		final Variable x = var("x"), y = var("y"), t = var("t"), n = var("n"), n1 = var("n1"), n2 = var("n2");
 
 		// node domain restriction : (in1 != in2 & .... & outY != outX)
 		final Conjunction nodeDomainRestriction = and();
@@ -110,9 +110,13 @@ public class ModelBuilder {
 			nodeAxioms.add(nodeAxiom);
 		}
 
-		// the train location : all X,T,N1,N2 (at(X,T,N1) & at(X,T,N2)) => (N1 = N2)
+		// the train location axiom : all X,T,N1,N2 (at(X,T,N1) & at(X,T,N2)) => (N1 = N2)
 		final Formula trainLocation = q(imp(and(at(x, t, n1), at(x, t, n2)), eq(n1, n2))).forAll(x, t, n1, n2);
 		trainLocation.setLabel("trainLocation");
+
+		// the train driver axiom : all X,T,N at(X,T,N) => (exists Y ((X = Y | less(X,Y)) & goes(Y,N)))
+		final Formula trainDriver = q(imp(at(x, t, n), q(and(or(eq(x, y), less(x, y)), goes(y, n))).exists(y))).forAll(x, t, n);
+		trainDriver.setLabel("trainDriver");
 
 		final BufferedWriter layout = new BufferedWriter(new FileWriter(new File(outputFolder, "layout.p")));
 		try {
@@ -122,6 +126,7 @@ public class ModelBuilder {
 				axiom.printFormula(layout, format);
 			}
 			trainLocation.printFormula(layout, format);
+			trainDriver.printFormula(layout, format);
 			layout.flush();
 		} catch (IOException e) {
 			layout.close();
