@@ -23,6 +23,10 @@ public class DomainFactory extends Factory {
 		return new PrOpen(time, node);
 	}
 
+	public static PrGoes goes(Term time, Term node) {
+		return new PrGoes(time, node);
+	}
+
 	public static FnSwitch swtch(Term time, Term node) {
 		return new FnSwitch(time, node);
 	}

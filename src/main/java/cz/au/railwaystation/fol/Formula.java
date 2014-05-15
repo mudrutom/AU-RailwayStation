@@ -10,13 +10,24 @@ import static com.google.common.base.Preconditions.checkState;
 public abstract class Formula {
 
 	private String label = null;
+	private String comment = null;
 
 	public String getLabel() {
 		return label;
 	}
 
-	public void setLabel(String label) {
+	public Formula setLabel(String label) {
 		this.label = label;
+		return this;
+	}
+
+	public String getComment() {
+		return comment;
+	}
+
+	public Formula setComment(String comment) {
+		this.comment = comment;
+		return this;
 	}
 
 	public Appendable printFormula(Appendable out, OutputFormat format) throws  IOException {
@@ -37,6 +48,9 @@ public abstract class Formula {
 			default: throw new IllegalArgumentException(format.name());
 		}
 
+		if (comment != null) {
+			out.append("% ").append(comment).append(String.format("\n"));
+		}
 		return print(out.append(prefix), format).append(suffix).append(String.format("\n"));
 	}
 
