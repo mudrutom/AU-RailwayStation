@@ -40,6 +40,10 @@ public class ModelBuilder {
 		format = OutputFormat.LADR;
 	}
 
+	public Graph getGraph() {
+		return graph;
+	}
+
 	public void setFormat(OutputFormat format) {
 		this.format = checkNotNull(format);
 	}
@@ -51,7 +55,7 @@ public class ModelBuilder {
 		for (Node node : allNodes) {
 			cons.put(node, con(node.getName()));
 		}
-		final Variable x = var("x"), n = var("n"), t = var("t");
+		final Variable x = var("x"), t = var("t"), n = var("n"), n1 = var("n1"), n2 = var("n2");
 
 		// node domain restriction : (in1 != in2 & .... & outY != outX)
 		final Conjunction nodeDomainRestriction = and();
@@ -74,32 +78,41 @@ public class ModelBuilder {
 		otherNodes.addAll(graph.getInnerNodes());
 		otherNodes.addAll(graph.getSinks());
 
-		// input node axioms : all X,T at(succ(X),T,in1) <-> (enter(X,T,in1) | (at(X,T,in1) & -open(X,in1))) ....
+		// input node axioms : all X,T at(succ(X),T,in1) <-> (enter(X,T,in1) | (at(X,T,in1) & (-goes(X,in1) | -open(X,in1)))) ....
 		final List<Formula> nodeAxioms = new LinkedList<Formula>();
 		for (Node node : graph.getSources()) {
 			Constant in = cons.get(node);
-			Formula inputNodeAxiom = q(eqv(at(succ(x), t, in), or(enter(x, t, in), and(at(x, t, in), neg(open(x, in)))))).forAll(x, t);
+			Formula inputNodeAxiom = q(eqv(at(succ(x), t, in), or(enter(x, t, in), and(at(x, t, in), or(neg(goes(x, in)), neg(open(x, in))))))).forAll(x, t);
 			inputNodeAxiom.setLabel("inputNode_" + node.getName());
 			nodeAxioms.add(inputNodeAxiom);
 		}
 
-		// other node axioms : all X,T at(succ(X),T,v2) <-> ((at(X,T,v1) & open(X,v1) & switch(X,v1) = v2) | .... )
+		// other node axioms : all X,T at(succ(X),T,v2) <-> ((at(X,T,in1) & -goes(X,in1)) | (at(X,T,v1) & goes(X,T,v1) & open(X,v1) & switch(X,v1) = v2) | .... )
 		for (Node node : otherNodes) {
+			Constant nodeCon = cons.get(node);
 			Disjunction leftSide = or();
+			if (!node.isSink()) {
+				leftSide.add(and(at(x, t, nodeCon), neg(goes(x, nodeCon))));
+			}
 			for (Node parent : node.getParents()) {
-				Conjunction conditions = and(at(x, t, cons.get(parent)));
+				Constant parentCon = cons.get(parent);
+				Conjunction conditions = and(at(x, t, parentCon), goes(x, parentCon));
 				if (parent.isSource()) {
-					conditions.add(open(x, cons.get(parent)));
+					conditions.add(open(x, parentCon));
 				}
 				if (parent.isSwitch()) {
-					conditions.add(eq(swtch(x, cons.get(parent)), cons.get(node)));
+					conditions.add(eq(swtch(x, parentCon), nodeCon));
 				}
 				leftSide.add(conditions);
 			}
-			Formula nodeAxiom = q(eqv(at(succ(x), t, cons.get(node)), leftSide)).forAll(x, t);
+			Formula nodeAxiom = q(eqv(at(succ(x), t, nodeCon), leftSide)).forAll(x, t);
 			nodeAxiom.setLabel("node_" + node.getName());
 			nodeAxioms.add(nodeAxiom);
 		}
+
+		// the train location : all X,T,N1,N2 (at(X,T,N1) & at(X,T,N2)) => (N1 = N2)
+		final Formula trainLocation = q(imp(and(at(x, t, n1), at(x, t, n2)), eq(n1, n2))).forAll(x, t, n1, n2);
+		trainLocation.setLabel("trainLocation");
 
 		final BufferedWriter layout = new BufferedWriter(new FileWriter(new File(outputFolder, "layout.p")));
 		try {
@@ -108,6 +121,7 @@ public class ModelBuilder {
 			for (Formula axiom : nodeAxioms) {
 				axiom.printFormula(layout, format);
 			}
+			trainLocation.printFormula(layout, format);
 			layout.flush();
 		} catch (IOException e) {
 			layout.close();
