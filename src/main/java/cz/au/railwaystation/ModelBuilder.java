@@ -34,7 +34,7 @@ public class ModelBuilder {
 	private ArrayList<Node> nodes;
 	private Map<Node, Constant> nodeCons;
 
-	public ModelBuilder(Graph graph, File outputFolder) throws IOException {
+	public ModelBuilder(Graph graph, File outputFolder) {
 		this.graph = checkNotNull(graph);
 		this.outputFolder = checkNotNull(outputFolder);
 		init();
@@ -48,7 +48,7 @@ public class ModelBuilder {
 		return nodeCons.get(node);
 	}
 
-	protected void init() {
+	private void init() {
 		nodes = Lists.newArrayList(graph);
 		nodeCons = new HashMap<Node, Constant>(nodes.size());
 		for (Node node : nodes) {
@@ -76,21 +76,21 @@ public class ModelBuilder {
 		trainDriverGoes.label("trainDriverGoes").comment("the train driver has to go eventually");
 		layoutAxioms.add(trainDriverGoes);
 
-		exportAxioms(layoutAxioms, "layout.p");
+		exportAxioms(layoutAxioms, "layout");
 	}
 
-	/** Build axioms for the node domains and the node predicate. */
+	/** Builds axioms for the node domain, i.e. allDiff and node predicate. */
 	private List<Formula> buildNodeDomainAxioms() {
 		final Variable n = var("n");
 
-		// node domain restriction : (in1 != in2 & in1 != v1 & .... )
-		final Conjunction nodeDomainRestriction = and();
+		// nodes all-different : (in1 != in2 & in1 != v1 & .... )
+		final Conjunction nodesAllDiff = and();
 		for (int i = 0, size = nodes.size(); i < size; i++) {
 			for (int j = i + 1; j < size; j++) {
-				nodeDomainRestriction.add(neq(nodeCon(nodes.get(i)), nodeCon(nodes.get(j))));
+				nodesAllDiff.add(neq(nodeCon(nodes.get(i)), nodeCon(nodes.get(j))));
 			}
 		}
-		nodeDomainRestriction.label("nodeDomainRestriction").comment("all the node constants need to be different");
+		nodesAllDiff.label("nodesAllDiff").comment("all the node constants need to be different");
 
 		// node predicate : all N node(N) <=> (N = in1 | N = in2 | .... )
 		final Disjunction nodeDomain = or();
@@ -100,7 +100,7 @@ public class ModelBuilder {
 		final Formula nodePredicate = q(eqv(node(n), nodeDomain)).forAll(n);
 		nodePredicate.label("nodePredicate").comment("all and only the node constants are nodes");
 
-		return Arrays.asList(nodeDomainRestriction, nodePredicate);
+		return Arrays.asList(nodesAllDiff, nodePredicate);
 	}
 
 	/** Builds axioms defining the transitions between nodes. */
@@ -141,6 +141,43 @@ public class ModelBuilder {
 		}
 
 		return nodeAxioms;
+	}
+
+	/** Axioms for the control system of the given railway station. */
+	public void createStationControlAxioms() throws IOException {
+		final ArrayList<Node> sources = Lists.newArrayList(graph.getSources());
+
+		final List<Formula> controlAxioms = new LinkedList<Formula>();
+		// add the clock axioms
+		controlAxioms.addAll(buildClockAxioms(sources));
+
+		exportAxioms(controlAxioms, "control");
+	}
+
+	/** Builds axioms for the controlling clock. */
+	private List<Formula> buildClockAxioms(ArrayList<Node> sources) {
+		final Variable x = var("x");
+		final List<Formula> clockAxioms = new LinkedList<Formula>();
+
+		// clock options : all X (clock(X) = in1 | clock(X) = in2 .... )
+		final Disjunction clockOptions = or();
+		for (Node node : sources) {
+			clockOptions.add(eq(clock(x), nodeCon(node)));
+		}
+		final Formula clockOptionsAxiom = q(clockOptions).forAll(x);
+		clockOptionsAxiom.label("clockOptions").comment("the clock has to be in one of the input nodes");
+		clockAxioms.add(clockOptionsAxiom);
+
+		// clock tics : all X (clock(X) = in1) <=> (clock(succ(X) = in2) ....
+		final Formula clockTic = q(eqv(eq(clock(x), nodeCon(sources.get(sources.size() - 1))), eq(clock(succ(x)), nodeCon(sources.get(0))))).forAll(x);
+		clockTic.label("clockTic").comment("the sequence of tics of the clock");
+		clockAxioms.add(clockTic);
+		for (int i = 0, size = sources.size() - 1; i < size; i++) {
+			Constant now = nodeCon(sources.get(i)), next = nodeCon(sources.get(i + 1));
+			clockAxioms.add(q(eqv(eq(clock(x), now), eq(clock(succ(x)), next))).forAll(x).label("clockTic_" + i));
+		}
+
+		return clockAxioms;
 	}
 
 	/** Axioms for the linear ordering. */

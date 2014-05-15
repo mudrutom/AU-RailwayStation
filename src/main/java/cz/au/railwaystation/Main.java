@@ -20,6 +20,7 @@ public class Main {
 		final ModelBuilder builder = new ModelBuilder(graph, new File("example"));
 		builder.setFormat(OutputFormat.TPTP);
 		builder.createStationLayoutAxioms();
+		builder.createStationControlAxioms();
 
 	}
 

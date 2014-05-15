@@ -31,6 +31,10 @@ public class DomainFactory extends Factory {
 		return new FnSwitch(time, node);
 	}
 
+	public static FnClock clock(Term time) {
+		return new FnClock(time);
+	}
+
 	public static PrLess less(Term i, Term j) {
 		return new PrLess(i, j);
 	}
