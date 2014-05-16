@@ -100,7 +100,7 @@ public class ModelBuilder {
 		exportAxioms(layoutAxioms, "layout");
 	}
 
-	/** Builds axioms for the node domain, i.e. allDiff and node predicate. */
+	/** Builds axioms for the node constants, i.e. allDiff and node predicate. */
 	private List<Formula> buildNodeDomainAxioms() {
 		final Variable n = var("n");
 
@@ -167,6 +167,9 @@ public class ModelBuilder {
 	public void createStationControlAxioms() throws IOException {
 		final List<Formula> controlAxioms = new LinkedList<Formula>();
 
+		// add the node domain axioms
+		controlAxioms.addAll(buildPathDomainAxioms());
+		controlAxioms.add(null);
 		// add the path axioms
 		controlAxioms.addAll(buildPathAxioms());
 		// add the signal control axioms
@@ -175,6 +178,30 @@ public class ModelBuilder {
 		controlAxioms.addAll(buildClockAxioms());
 
 		exportAxioms(controlAxioms, "control");
+	}
+
+	/** Builds axioms for the path constants, i.e. allDiff and path predicate. */
+	private List<Formula> buildPathDomainAxioms() {
+		final Variable p = var("p");
+
+		// path all-different : (p1 != p2 & p1 != p3 & .... )
+		final Conjunction pathAllDiff = and();
+		for (int i = 0, size = paths.size(); i < size; i++) {
+			for (int j = i + 1; j < size; j++) {
+				pathAllDiff.add(neq(pathCon(paths.get(i)), pathCon(paths.get(j))));
+			}
+		}
+		pathAllDiff.label("pathAllDiff").comment("all the path constants need to be different");
+
+		// path predicate : all P node(P) <=> (P = p1 | P = p2 | .... )
+		final Disjunction pathDomain = or();
+		for (Path path : paths) {
+			pathDomain.add(eq(p, pathCon(path)));
+		}
+		final Formula pathPredicate = q(eqv(path(p), pathDomain)).forAll(p);
+		pathPredicate.label("pathPredicate").comment("all and only the path constants are paths");
+
+		return Arrays.asList(pathAllDiff, pathPredicate);
 	}
 
 	/** Builds axioms defining the possible paths through the station. */

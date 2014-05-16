@@ -11,6 +11,18 @@ public class DomainFactory extends Factory {
 		return new PrNode(node);
 	}
 
+	public static PrPath path(Term path) {
+		return new PrPath(path);
+	}
+
+	public static PrTime time(Term time) {
+		return new PrTime(time);
+	}
+
+	public static PrTrain train(Term train) {
+		return new PrTrain(train);
+	}
+
 	public static PrAt at(Term time, Term train, Term node) {
 		return new PrAt(time, train, node);
 	}
