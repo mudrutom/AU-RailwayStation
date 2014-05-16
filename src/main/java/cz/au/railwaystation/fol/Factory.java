@@ -56,4 +56,8 @@ public class Factory {
 		return new Quantification(formula);
 	}
 
+	public static BoolSymbol b(boolean value) {
+		return new BoolSymbol(value);
+	}
+
 }

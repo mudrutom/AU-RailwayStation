@@ -35,6 +35,18 @@ public class DomainFactory extends Factory {
 		return new FnClock(time);
 	}
 
+	public static FnGate gate(Term train) {
+		return new FnGate(train);
+	}
+
+	public static PrConf conf(Term time, Term path) {
+		return new PrConf(time, path);
+	}
+
+	public static PrFree free(Term time, Term path) {
+		return new PrFree(time, path);
+	}
+
 	public static PrLess less(Term i, Term j) {
 		return new PrLess(i, j);
 	}
