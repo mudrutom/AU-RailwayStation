@@ -1,4 +1,4 @@
-digraph station {
+digraph station_1 {
 	in1 -> v1;
 	in2 -> v2;
 	v1 -> out1;
