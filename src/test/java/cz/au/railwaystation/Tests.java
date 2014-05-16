@@ -86,22 +86,22 @@ public class Tests {
 	public void testPathIntersection() {
 		final Graph graph = new Graph()
 				.edge("in1", "v1")
-				.edge("in1", "v2")
-				.edge("in2", "v2")
+				.edge("in2", "v1")
+				.edge("in3", "v2")
+				.edge("v1", "v2")
 				.edge("v1", "out1")
 				.edge("v1", "out2")
-				.edge("v2", "out1")
-				.edge("v2", "out2");
+				.edge("v2", "out3");
 		final Node
-				in1 = graph.getNode("in1"), in2 = graph.getNode("in2"),
+				in1 = graph.getNode("in1"), in2 = graph.getNode("in2"), in3 = graph.getNode("in3"),
 				v1 = graph.getNode("v1"), v2 = graph.getNode("v2"),
-				out1 = graph.getNode("out1"), out2 = graph.getNode("out2");
+				out1 = graph.getNode("out1"), out2 = graph.getNode("out2"), out3 = graph.getNode("out3");
 
 		final GraphPaths graphPaths = GraphUtil.findAllPaths(graph);
-		assertEquals(newSet(new Path(in1, v1, out2), new Path(in1, v2, out1), new Path(in1, v2, out2), new Path(in2, v2, out1)),
+		assertEquals(newSet(new Path(in1, v1, out2), new Path(in1, v1, v2, out3), new Path(in2, v1, out1), new Path(in2, v1, out2), new Path(in2, v1, v2, out3)),
 					 GraphUtil.getIntersectingPaths(graphPaths, new Path(in1, v1, out1)));
-		assertEquals(newSet(new Path(in1, v1, out2), new Path(in1, v2, out1), new Path(in1, v2, out2), new Path(in2, v2, out1)),
-					 GraphUtil.getIntersectingPaths(graphPaths, new Path(in2, v2, out2)));
+		assertEquals(newSet(new Path(in1, v1, v2, out3), new Path(in2, v1, v2, out3)),
+					 GraphUtil.getIntersectingPaths(graphPaths, new Path(in3, v2, out3)));
 	}
 
 	@Test
