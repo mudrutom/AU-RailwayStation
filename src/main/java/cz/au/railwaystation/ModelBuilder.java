@@ -2,7 +2,10 @@ package cz.au.railwaystation;
 
 import com.google.common.collect.Lists;
 import cz.au.railwaystation.dot.Graph;
+import cz.au.railwaystation.dot.GraphPaths;
+import cz.au.railwaystation.dot.GraphUtil;
 import cz.au.railwaystation.dot.Node;
+import cz.au.railwaystation.dot.Path;
 import cz.au.railwaystation.fol.Conjunction;
 import cz.au.railwaystation.fol.Constant;
 import cz.au.railwaystation.fol.Disjunction;
@@ -17,6 +20,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -31,8 +35,13 @@ public class ModelBuilder {
 
 	private OutputFormat format = OutputFormat.LADR;
 
+	private GraphPaths graphPaths;
+
 	private ArrayList<Node> nodes;
 	private Map<Node, Constant> nodeCons;
+
+	private ArrayList<Path> paths;
+	private Map<Path, Constant> pathCons;
 
 	public ModelBuilder(Graph graph, File outputFolder) {
 		this.graph = checkNotNull(graph);
@@ -48,11 +57,21 @@ public class ModelBuilder {
 		return nodeCons.get(node);
 	}
 
+	private Constant pathCon(Path path) {
+		return pathCons.get(path);
+	}
+
 	private void init() {
+		graphPaths = GraphUtil.findAllPaths(graph);
 		nodes = Lists.newArrayList(graph);
 		nodeCons = new HashMap<Node, Constant>(nodes.size());
 		for (Node node : nodes) {
 			nodeCons.put(node, con(node.getName()));
+		}
+		paths = new ArrayList<Path>(graphPaths.getAllPaths());
+		pathCons = new HashMap<Path, Constant>(paths.size());
+		for (Path path : paths) {
+			pathCons.put(path, con(String.format("%s_%s_%d", path.getStart().getName(), path.getEnd().getName(), path.getIndex())));
 		}
 	}
 
@@ -63,8 +82,10 @@ public class ModelBuilder {
 		final List<Formula> layoutAxioms = new LinkedList<Formula>();
 		// add the node domain axioms
 		layoutAxioms.addAll(buildNodeDomainAxioms());
+		layoutAxioms.add(null);
 		// add the node transition axioms
 		layoutAxioms.addAll(buildNodeTransitionAxioms());
+		layoutAxioms.add(null);
 
 		// train singular location axiom : all X,T,N1,N2 (at(X,T,N1) & at(X,T,N2)) => (N1 = N2)
 		final Formula singularTrainLocation = q(imp(and(at(x, t, n1), at(x, t, n2)), eq(n1, n2))).forAll(x, t, n1, n2);
@@ -105,7 +126,6 @@ public class ModelBuilder {
 
 	/** Builds axioms defining the transitions between nodes. */
 	private List<Formula> buildNodeTransitionAxioms() {
-		// X = time, T = train
 		final Variable x = var("x"), t = var("t");
 
 		final List<Formula> nodeAxioms = new LinkedList<Formula>();
@@ -114,14 +134,14 @@ public class ModelBuilder {
 				// input node axioms : all X,T at(succ(X),T,in) <-> (enter(X,T,in) | (at(X,T,in) & (-goes(X,in) | -open(X,in)))) ....
 				Constant in = nodeCon(node);
 				Formula inputNodeAxiom = q(eqv(at(succ(x), t, in), or(enter(x, t, in), and(at(x, t, in), or(neg(goes(x, in)), neg(open(x, in))))))).forAll(x, t);
-				inputNodeAxiom.label("node_" + node.getName()).comment("input node transition axiom");
+				inputNodeAxiom.label("node_" + in.getName()).comment("transition axiom for input node " + node.getName());
 				nodeAxioms.add(inputNodeAxiom);
 			} else {
 				// other node axioms : all X,T at(succ(X),T,n) <-> ((at(X,T,n) & -goes(X,n)) | (at(X,T,v1) & goes(X,T,v1) & open(X,v1) & switch(X,v1) = n) | .... )
 				Constant n = nodeCon(node);
-				Disjunction leftSide = or();
+				Disjunction rightSide = or();
 				if (!node.isSink()) {
-					leftSide.add(and(at(x, t, n), neg(goes(x, n))));
+					rightSide.add(and(at(x, t, n), neg(goes(x, n))));
 				}
 				for (Node parent : node.getParents()) {
 					Constant parentCon = nodeCon(parent);
@@ -132,10 +152,10 @@ public class ModelBuilder {
 					if (parent.isSwitch()) {
 						conditions.add(eq(swtch(x, parentCon), n));
 					}
-					leftSide.add(conditions);
+					rightSide.add(conditions);
 				}
-				Formula nodeAxiom = q(eqv(at(succ(x), t, n), leftSide)).forAll(x, t);
-				nodeAxiom.label("node_" + node.getName()).comment((node.isSink() ? "sink" : "inner") + " node transition axiom");
+				Formula nodeAxiom = q(eqv(at(succ(x), t, n), rightSide)).forAll(x, t);
+				nodeAxiom.label("node_" + n.getName()).comment("transition axiom for " + (node.isSink() ? "sink node " : "inner node ") + node.getName());
 				nodeAxioms.add(nodeAxiom);
 			}
 		}
@@ -148,10 +168,62 @@ public class ModelBuilder {
 		final ArrayList<Node> sources = Lists.newArrayList(graph.getSources());
 
 		final List<Formula> controlAxioms = new LinkedList<Formula>();
+		// add the path axioms
+		controlAxioms.addAll(buildPathAxioms());
 		// add the clock axioms
 		controlAxioms.addAll(buildClockAxioms(sources));
 
 		exportAxioms(controlAxioms, "control");
+	}
+
+	/** Builds axioms defining the possible paths through the station. */
+	private List<Formula> buildPathAxioms() {
+		final Variable x = var("x"), t = var("t");
+		final LinkedList<Formula> pathAxioms = new LinkedList<Formula>();
+
+		for (Path path : paths) {
+			Constant p = pathCon(path);
+			String pathName = String.format("(%s->%s)#%d", path.getStart().getName(), path.getEnd().getName(), path.getIndex());
+
+			// station configuration : all X conf(X,p) <=> (switch(X,n1) = n1 & switch(X,n2) = n3 & .... )
+			Conjunction switches = and();
+			ArrayList<Node> nodes = Lists.newArrayList(path.iterator());
+			for (int i = 0, size = nodes.size() - 1; i < size; i++) {
+				if (nodes.get(i).isSwitch()) {
+					switches.add(eq(swtch(x, nodeCon(nodes.get(i))), nodeCon(nodes.get(i + 1))));
+				}
+			}
+			Formula pathConf = q(eqv(conf(x, p), (switches.size() > 0) ? switches : b(true))).forAll(x);
+			pathConf.label("conf_" + p.getName()).comment("switch configuration axiom for " + pathName);
+			pathAxioms.add(pathConf);
+
+			// free path axiom : all X,T free(X,p) <=> (-at(X,T,n1) & -at(X,T,n2) & .... )
+			final LinkedHashSet<Node> freeNodes = new LinkedHashSet<Node>();
+			for (Node node : path) {
+				if (!node.isSource()) {
+					freeNodes.add(node);
+				}
+			}
+			for (Path intersecting : GraphUtil.getIntersectingPaths(graphPaths, path)) {
+				// TODO add only the nodes before the last intersection
+				for (Node node : intersecting) {
+					if (!node.isSource() && !node.isSink()) {
+						freeNodes.add(node);
+					}
+				}
+			}
+			Conjunction rightSide = and();
+			for (Node node : freeNodes) {
+				rightSide.add(neg(at(x, t, nodeCon(node))));
+			}
+			Formula pathFree = q(eqv(free(x, p), rightSide)).forAll(x, t);
+			pathFree.label("free_" + p.getName()).comment("free path axiom for " + pathName);
+			pathAxioms.add(pathFree);
+
+			pathAxioms.add(null);
+		}
+
+		return pathAxioms;
 	}
 
 	/** Builds axioms for the controlling clock. */
@@ -165,12 +237,12 @@ public class ModelBuilder {
 			clockOptions.add(eq(clock(x), nodeCon(node)));
 		}
 		final Formula clockOptionsAxiom = q(clockOptions).forAll(x);
-		clockOptionsAxiom.label("clockOptions").comment("the clock has to be in one of the input nodes");
+		clockOptionsAxiom.label("clockOptions").comment("the control clock has to be in one of the input nodes");
 		clockAxioms.add(clockOptionsAxiom);
 
 		// clock tics : all X (clock(X) = in1) <=> (clock(succ(X) = in2) ....
 		final Formula clockTic = q(eqv(eq(clock(x), nodeCon(sources.get(sources.size() - 1))), eq(clock(succ(x)), nodeCon(sources.get(0))))).forAll(x);
-		clockTic.label("clockTic").comment("the sequence of tics of the clock");
+		clockTic.label("clockTic").comment("the sequence of tics of the control clock");
 		clockAxioms.add(clockTic);
 		for (int i = 0, size = sources.size() - 1; i < size; i++) {
 			Constant now = nodeCon(sources.get(i)), next = nodeCon(sources.get(i + 1));
@@ -215,7 +287,11 @@ public class ModelBuilder {
 		final BufferedWriter layout = new BufferedWriter(new FileWriter(new File(outputFolder, filename)));
 		try {
 			for (Formula axiom : axioms) {
-				axiom.printFormula(layout, format);
+				if (axiom == null) {
+					layout.newLine();
+				} else {
+					axiom.printFormula(layout, format);
+				}
 			}
 			layout.flush();
 		} catch (IOException e) {
