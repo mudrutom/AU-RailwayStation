@@ -165,13 +165,14 @@ public class ModelBuilder {
 
 	/** Axioms for the control system of the given railway station. */
 	public void createStationControlAxioms() throws IOException {
-		final ArrayList<Node> sources = Lists.newArrayList(graph.getSources());
-
 		final List<Formula> controlAxioms = new LinkedList<Formula>();
+
 		// add the path axioms
 		controlAxioms.addAll(buildPathAxioms());
+		// add the signal control axioms
+		controlAxioms.addAll(buildSignalControlAxioms());
 		// add the clock axioms
-		controlAxioms.addAll(buildClockAxioms(sources));
+		controlAxioms.addAll(buildClockAxioms());
 
 		exportAxioms(controlAxioms, "control");
 	}
@@ -185,7 +186,7 @@ public class ModelBuilder {
 			Constant p = pathCon(path);
 			String pathName = String.format("(%s->%s)#%d", path.getStart().getName(), path.getEnd().getName(), path.getIndex());
 
-			// station configuration : all X conf(X,p) <=> (switch(X,n1) = n1 & switch(X,n2) = n3 & .... )
+			// switch configuration : all X conf(X,p) <=> (switch(X,n1) = n1 & switch(X,n2) = n3 & .... )
 			Conjunction switches = and();
 			ArrayList<Node> nodes = Lists.newArrayList(path.iterator());
 			for (int i = 0, size = nodes.size() - 1; i < size; i++) {
@@ -226,10 +227,43 @@ public class ModelBuilder {
 		return pathAxioms;
 	}
 
-	/** Builds axioms for the controlling clock. */
-	private List<Formula> buildClockAxioms(ArrayList<Node> sources) {
+	/** Builds axioms for controlling the input node signals. */
+	private List<Formula> buildSignalControlAxioms() {
+		final Variable x = var("x"), t = var("t");
+		final List<Formula> signalAxioms = new LinkedList<Formula>();
+
+		for (Node node : graph.getSources()) {
+			Constant in = nodeCon(node);
+
+			for (Node sink : graph.getSinks()) {
+				// open the signal : all X,T (clock(X) = in & at(X,T,in) & gate(T) = out & ((conf(X,p1) & free(X,p1)) | ....)) => open(X,in)
+				Disjunction paths = or();
+				for (Path path : graphPaths.getPaths(node, sink)) {
+					paths.add(and(conf(x, pathCon(path)), free(x, pathCon(path))));
+				}
+				Constant out = nodeCon(sink);
+				Formula openAxiom = q(imp(and(eq(clock(x), in), at(x, t, in), eq(gate(t), out), paths), open(x, in))).forAll(x, t);
+				openAxiom.label("open_" + in.getName() + "_" + out.getName()).comment("open the signal " + node.getName() + " for a path to " + sink.getName());
+				signalAxioms.add(openAxiom);
+			}
+
+			// close the signal : all X,T (at(pred(X),T,in) & open(X,in) & -at(X,T,in) => -open(X,in)
+			Formula closeAxiom = q(imp(and(at(pred(x), t, in), open(x, in), neg(at(x, t, in))), neg(open(x, in)))).forAll(x, t);
+			closeAxiom.label("close_" + in.getName()).comment("close the signal " + node.getName() + " when a train leaves");
+			signalAxioms.add(closeAxiom);
+
+			signalAxioms.add(null);
+		}
+
+		return signalAxioms;
+	}
+
+	/** Builds axioms for the control clock. */
+	private List<Formula> buildClockAxioms() {
 		final Variable x = var("x");
 		final List<Formula> clockAxioms = new LinkedList<Formula>();
+
+		final ArrayList<Node> sources = Lists.newArrayList(graph.getSources());
 
 		// clock options : all X (clock(X) = in1 | clock(X) = in2 .... )
 		final Disjunction clockOptions = or();
