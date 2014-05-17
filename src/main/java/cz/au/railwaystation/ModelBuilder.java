@@ -226,7 +226,7 @@ public class ModelBuilder {
 			pathConf.label("conf_" + p.getName()).comment("switch configuration axiom for " + pathName);
 			pathAxioms.add(pathConf);
 
-			// free path axiom : all X,T free(X,p) <=> (-at(X,T,n1) & -at(X,T,n2) & .... )
+			// free path axiom : all X free(X,p) <=> (all T -at(X,T,n1) & -at(X,T,n2) & .... )
 			final LinkedHashSet<Node> freeNodes = new LinkedHashSet<Node>();
 			for (Node node : path) {
 				if (!node.isSource()) {
@@ -245,7 +245,7 @@ public class ModelBuilder {
 			for (Node node : freeNodes) {
 				rightSide.add(neg(at(x, t, nodeCon(node))));
 			}
-			Formula pathFree = q(eqv(free(x, p), rightSide)).forAll(x, t);
+			Formula pathFree = q(eqv(free(x, p), q(rightSide).forAll(t))).forAll(x);
 			pathFree.label("free_" + p.getName()).comment("free path axiom for " + pathName);
 			pathAxioms.add(pathFree);
 
@@ -270,8 +270,8 @@ public class ModelBuilder {
 					Constant p1 = pathCon(path);
 					String pathName = String.format("(%s->%s)#%d", path.getStart().getName(), path.getEnd().getName(), path.getIndex());
 
-					// path ready axiom : all X,T ready(X,p1) <=> (clock(X) = in & at(X,T,in) & gate(T) = out & free(X,p1))
-					Formula readyAxiom = q(eqv(ready(x, p1), and(eq(clock(x), in), at(x, t, in), eq(gate(t), out), free(x, p1)))).forAll(x, t);
+					// path ready axiom : all X ready(X,p1) <=> (clock(X) = in & free(X,p1) & (exists T at(X,T,in) & gate(T) = out))
+					Formula readyAxiom = q(eqv(ready(x, p1), and(eq(clock(x), in), free(x, p1), q(and(at(x, t, in), eq(gate(t), out))).exists(t)))).forAll(x);
 					readyAxiom.label("ready_" + in.getName() + "_" + out.getName()).comment("the path ready axiom for " + pathName);
 					controlAxioms.add(readyAxiom);
 
@@ -347,7 +347,11 @@ public class ModelBuilder {
 		final Formula predecessor = q(and(eq(pred(succ(x)), x), eq(succ(pred(x)), x))).forAll(x);
 		predecessor.label("predecessor");
 
-		exportAxioms(Arrays.asList(antisymmetry, transitivity, totality, successor, predecessor), "order");
+		// non-identity : all X (succ(X) != X) & (pred(X) != X)
+		final Formula nonIdentity = q(and(neq(succ(x), x), neq(pred(x), x))).forAll(x);
+		nonIdentity.label("nonIdentity");
+
+		exportAxioms(Arrays.asList(antisymmetry, transitivity, totality, successor, predecessor, nonIdentity), "order");
 	}
 
 	private void exportAxioms(List<Formula> axioms, String filename) throws IOException {
