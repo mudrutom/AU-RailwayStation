@@ -1,0 +1,5 @@
+digraph station_0 {
+	in1 -> v1;
+	v1 -> out1;
+	v1 -> out2;
+}

@@ -23,11 +23,11 @@ fof(node_in2, axiom, (
 fof(node_v2, axiom, (
    (![X]: ![T]: (at(succ(X), T, v2) <=> ((at(X, T, v2) & ~goes(X, v2)) | (at(X, T, in2) & goes(X, in2) & open(X, in2)))))
 )).
-% transition axiom for sink node out1
+% transition axiom for output node out1
 fof(node_out1, axiom, (
    (![X]: ![T]: (at(succ(X), T, out1) <=> ((at(X, T, v1) & goes(X, v1) & (switch(X, v1) = out1)) | (at(X, T, v2) & goes(X, v2) & (switch(X, v2) = out1)))))
 )).
-% transition axiom for sink node out2
+% transition axiom for output node out2
 fof(node_out2, axiom, (
    (![X]: ![T]: (at(succ(X), T, out2) <=> ((at(X, T, v1) & goes(X, v1) & (switch(X, v1) = out2)) | (at(X, T, v2) & goes(X, v2) & (switch(X, v2) = out2)))))
 )).

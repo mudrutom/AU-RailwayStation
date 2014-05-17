@@ -44,11 +44,11 @@ fof(free_in1_out1_0, axiom, (
 )).
 
 % the path ready axiom for (in1->out1)#0
-fof(ready_in1_out1, axiom, (
+fof(ready_in1_out1_0, axiom, (
    (![X]: (ready(X, in1_out1_0) <=> ((clock(X) = in1) & free(X, in1_out1_0) & (?[T]: (at(X, T, in1) & (gate(T) = out1))))))
 )).
 % the path ready axiom for (in1->out2)#0
-fof(ready_in1_out2, axiom, (
+fof(ready_in1_out2_0, axiom, (
    (![X]: (ready(X, in1_out2_0) <=> ((clock(X) = in1) & free(X, in1_out2_0) & (?[T]: (at(X, T, in1) & (gate(T) = out2))))))
 )).
 % open the signal in1 when some outgoing path is ready
@@ -57,11 +57,11 @@ fof(open_in1, axiom, (
 )).
 
 % the path ready axiom for (in2->out1)#0
-fof(ready_in2_out1, axiom, (
+fof(ready_in2_out1_0, axiom, (
    (![X]: (ready(X, in2_out1_0) <=> ((clock(X) = in2) & free(X, in2_out1_0) & (?[T]: (at(X, T, in2) & (gate(T) = out1))))))
 )).
 % the path ready axiom for (in2->out2)#0
-fof(ready_in2_out2, axiom, (
+fof(ready_in2_out2_0, axiom, (
    (![X]: (ready(X, in2_out2_0) <=> ((clock(X) = in2) & free(X, in2_out2_0) & (?[T]: (at(X, T, in2) & (gate(T) = out2))))))
 )).
 % open the signal in2 when some outgoing path is ready
@@ -71,7 +71,7 @@ fof(open_in2, axiom, (
 
 % controlling of the station configuration (i.e. the switches)
 fof(confControl, axiom, (
-   (![X]: ![P]: (conf(X, P) <=> (ready(X, P) | (conf(pred(X), P) & ~free(X, P)))))
+   (![X]: ![P]: ((ready(X, P) | (conf(pred(X), P) & ~free(X, P))) => conf(X, P)))
 )).
 
 % the control clock has to be in one of the input nodes

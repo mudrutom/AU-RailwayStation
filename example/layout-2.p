@@ -39,15 +39,15 @@ fof(node_s2, axiom, (
 fof(node_s3, axiom, (
    (![X]: ![T]: (at(succ(X), T, s3) <=> ((at(X, T, s3) & ~goes(X, s3)) | (at(X, T, s7) & goes(X, s7) & (switch(X, s7) = s3)) | (at(X, T, s4) & goes(X, s4) & (switch(X, s4) = s3)) | (at(X, T, s5) & goes(X, s5) & (switch(X, s5) = s3)))))
 )).
-% transition axiom for sink node out1
+% transition axiom for output node out1
 fof(node_out1, axiom, (
    (![X]: ![T]: (at(succ(X), T, out1) <=> ((at(X, T, s2) & goes(X, s2)) | (at(X, T, s3) & goes(X, s3) & (switch(X, s3) = out1)))))
 )).
-% transition axiom for sink node out2
+% transition axiom for output node out2
 fof(node_out2, axiom, (
    (![X]: ![T]: (at(succ(X), T, out2) <=> ((at(X, T, s4) & goes(X, s4) & (switch(X, s4) = out2)) | (at(X, T, s5) & goes(X, s5) & (switch(X, s5) = out2)) | (at(X, T, s3) & goes(X, s3) & (switch(X, s3) = out2)))))
 )).
-% transition axiom for sink node out3
+% transition axiom for output node out3
 fof(node_out3, axiom, (
    (![X]: ![T]: (at(succ(X), T, out3) <=> ((at(X, T, s3) & goes(X, s3) & (switch(X, s3) = out3)))))
 )).

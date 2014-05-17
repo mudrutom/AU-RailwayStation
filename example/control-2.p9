@@ -74,44 +74,44 @@
 (all X (free(X, in3_out1_0) <-> (all T (-at(X, T, s5) & -at(X, T, s3) & -at(X, T, out1) & -at(X, T, s4) & -at(X, T, s2) & -at(X, T, s7))))) # label(free_in3_out1_0).
 
 % the path ready axiom for (in1->out1)#1
-(all X (ready(X, in1_out1_1) <-> ((clock(X) = in1) & free(X, in1_out1_1) & (exists T (at(X, T, in1) & (gate(T) = out1)))))) # label(ready_in1_out1).
+(all X (ready(X, in1_out1_1) <-> ((clock(X) = in1) & free(X, in1_out1_1) & (exists T (at(X, T, in1) & (gate(T) = out1)))))) # label(ready_in1_out1_1).
 % the path ready axiom for (in1->out1)#0
-(all X (ready(X, in1_out1_0) <-> ((clock(X) = in1) & free(X, in1_out1_0) & (exists T (at(X, T, in1) & (gate(T) = out1)))))) # label(ready_in1_out1).
+(all X (ready(X, in1_out1_0) <-> ((clock(X) = in1) & free(X, in1_out1_0) & (exists T (at(X, T, in1) & (gate(T) = out1)))))) # label(ready_in1_out1_0).
 % the path ready axiom for (in1->out2)#0
-(all X (ready(X, in1_out2_0) <-> ((clock(X) = in1) & free(X, in1_out2_0) & (exists T (at(X, T, in1) & (gate(T) = out2)))))) # label(ready_in1_out2).
+(all X (ready(X, in1_out2_0) <-> ((clock(X) = in1) & free(X, in1_out2_0) & (exists T (at(X, T, in1) & (gate(T) = out2)))))) # label(ready_in1_out2_0).
 % the path ready axiom for (in1->out3)#0
-(all X (ready(X, in1_out3_0) <-> ((clock(X) = in1) & free(X, in1_out3_0) & (exists T (at(X, T, in1) & (gate(T) = out3)))))) # label(ready_in1_out3).
+(all X (ready(X, in1_out3_0) <-> ((clock(X) = in1) & free(X, in1_out3_0) & (exists T (at(X, T, in1) & (gate(T) = out3)))))) # label(ready_in1_out3_0).
 % open the signal in1 when some outgoing path is ready
 (all X (open(X, in1) <-> (ready(X, in1_out1_1) | ready(X, in1_out1_0) | ready(X, in1_out2_0) | ready(X, in1_out3_0)))) # label(open_in1).
 
 % the path ready axiom for (in2->out1)#1
-(all X (ready(X, in2_out1_1) <-> ((clock(X) = in2) & free(X, in2_out1_1) & (exists T (at(X, T, in2) & (gate(T) = out1)))))) # label(ready_in2_out1).
+(all X (ready(X, in2_out1_1) <-> ((clock(X) = in2) & free(X, in2_out1_1) & (exists T (at(X, T, in2) & (gate(T) = out1)))))) # label(ready_in2_out1_1).
 % the path ready axiom for (in2->out1)#0
-(all X (ready(X, in2_out1_0) <-> ((clock(X) = in2) & free(X, in2_out1_0) & (exists T (at(X, T, in2) & (gate(T) = out1)))))) # label(ready_in2_out1).
+(all X (ready(X, in2_out1_0) <-> ((clock(X) = in2) & free(X, in2_out1_0) & (exists T (at(X, T, in2) & (gate(T) = out1)))))) # label(ready_in2_out1_0).
 % the path ready axiom for (in2->out2)#1
-(all X (ready(X, in2_out2_1) <-> ((clock(X) = in2) & free(X, in2_out2_1) & (exists T (at(X, T, in2) & (gate(T) = out2)))))) # label(ready_in2_out2).
+(all X (ready(X, in2_out2_1) <-> ((clock(X) = in2) & free(X, in2_out2_1) & (exists T (at(X, T, in2) & (gate(T) = out2)))))) # label(ready_in2_out2_1).
 % the path ready axiom for (in2->out2)#0
-(all X (ready(X, in2_out2_0) <-> ((clock(X) = in2) & free(X, in2_out2_0) & (exists T (at(X, T, in2) & (gate(T) = out2)))))) # label(ready_in2_out2).
+(all X (ready(X, in2_out2_0) <-> ((clock(X) = in2) & free(X, in2_out2_0) & (exists T (at(X, T, in2) & (gate(T) = out2)))))) # label(ready_in2_out2_0).
 % the path ready axiom for (in2->out3)#0
-(all X (ready(X, in2_out3_0) <-> ((clock(X) = in2) & free(X, in2_out3_0) & (exists T (at(X, T, in2) & (gate(T) = out3)))))) # label(ready_in2_out3).
+(all X (ready(X, in2_out3_0) <-> ((clock(X) = in2) & free(X, in2_out3_0) & (exists T (at(X, T, in2) & (gate(T) = out3)))))) # label(ready_in2_out3_0).
 % open the signal in2 when some outgoing path is ready
 (all X (open(X, in2) <-> (ready(X, in2_out1_1) | ready(X, in2_out1_0) | ready(X, in2_out2_1) | ready(X, in2_out2_0) | ready(X, in2_out3_0)))) # label(open_in2).
 
 % the path ready axiom for (in3->out1)#1
-(all X (ready(X, in3_out1_1) <-> ((clock(X) = in3) & free(X, in3_out1_1) & (exists T (at(X, T, in3) & (gate(T) = out1)))))) # label(ready_in3_out1).
+(all X (ready(X, in3_out1_1) <-> ((clock(X) = in3) & free(X, in3_out1_1) & (exists T (at(X, T, in3) & (gate(T) = out1)))))) # label(ready_in3_out1_1).
 % the path ready axiom for (in3->out1)#0
-(all X (ready(X, in3_out1_0) <-> ((clock(X) = in3) & free(X, in3_out1_0) & (exists T (at(X, T, in3) & (gate(T) = out1)))))) # label(ready_in3_out1).
+(all X (ready(X, in3_out1_0) <-> ((clock(X) = in3) & free(X, in3_out1_0) & (exists T (at(X, T, in3) & (gate(T) = out1)))))) # label(ready_in3_out1_0).
 % the path ready axiom for (in3->out2)#1
-(all X (ready(X, in3_out2_1) <-> ((clock(X) = in3) & free(X, in3_out2_1) & (exists T (at(X, T, in3) & (gate(T) = out2)))))) # label(ready_in3_out2).
+(all X (ready(X, in3_out2_1) <-> ((clock(X) = in3) & free(X, in3_out2_1) & (exists T (at(X, T, in3) & (gate(T) = out2)))))) # label(ready_in3_out2_1).
 % the path ready axiom for (in3->out2)#0
-(all X (ready(X, in3_out2_0) <-> ((clock(X) = in3) & free(X, in3_out2_0) & (exists T (at(X, T, in3) & (gate(T) = out2)))))) # label(ready_in3_out2).
+(all X (ready(X, in3_out2_0) <-> ((clock(X) = in3) & free(X, in3_out2_0) & (exists T (at(X, T, in3) & (gate(T) = out2)))))) # label(ready_in3_out2_0).
 % the path ready axiom for (in3->out3)#0
-(all X (ready(X, in3_out3_0) <-> ((clock(X) = in3) & free(X, in3_out3_0) & (exists T (at(X, T, in3) & (gate(T) = out3)))))) # label(ready_in3_out3).
+(all X (ready(X, in3_out3_0) <-> ((clock(X) = in3) & free(X, in3_out3_0) & (exists T (at(X, T, in3) & (gate(T) = out3)))))) # label(ready_in3_out3_0).
 % open the signal in3 when some outgoing path is ready
 (all X (open(X, in3) <-> (ready(X, in3_out1_1) | ready(X, in3_out1_0) | ready(X, in3_out2_1) | ready(X, in3_out2_0) | ready(X, in3_out3_0)))) # label(open_in3).
 
 % controlling of the station configuration (i.e. the switches)
-(all X all P (conf(X, P) <-> (ready(X, P) | (conf(pred(X), P) & -free(X, P))))) # label(confControl).
+(all X all P ((ready(X, P) | (conf(pred(X), P) & -free(X, P))) -> conf(X, P))) # label(confControl).
 
 % the control clock has to be in one of the input nodes
 (all X ((clock(X) = in1) | (clock(X) = in2) | (clock(X) = in3))) # label(clockOptions).

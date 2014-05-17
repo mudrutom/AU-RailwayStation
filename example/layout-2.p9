@@ -19,11 +19,11 @@
 (all X all T (at(succ(X), T, s2) <-> ((at(X, T, s2) & -goes(X, s2)) | (at(X, T, s7) & goes(X, s7) & (switch(X, s7) = s2)) | (at(X, T, s4) & goes(X, s4) & (switch(X, s4) = s2)) | (at(X, T, s5) & goes(X, s5) & (switch(X, s5) = s2))))) # label(node_s2).
 % transition axiom for inner node s3
 (all X all T (at(succ(X), T, s3) <-> ((at(X, T, s3) & -goes(X, s3)) | (at(X, T, s7) & goes(X, s7) & (switch(X, s7) = s3)) | (at(X, T, s4) & goes(X, s4) & (switch(X, s4) = s3)) | (at(X, T, s5) & goes(X, s5) & (switch(X, s5) = s3))))) # label(node_s3).
-% transition axiom for sink node out1
+% transition axiom for output node out1
 (all X all T (at(succ(X), T, out1) <-> ((at(X, T, s2) & goes(X, s2)) | (at(X, T, s3) & goes(X, s3) & (switch(X, s3) = out1))))) # label(node_out1).
-% transition axiom for sink node out2
+% transition axiom for output node out2
 (all X all T (at(succ(X), T, out2) <-> ((at(X, T, s4) & goes(X, s4) & (switch(X, s4) = out2)) | (at(X, T, s5) & goes(X, s5) & (switch(X, s5) = out2)) | (at(X, T, s3) & goes(X, s3) & (switch(X, s3) = out2))))) # label(node_out2).
-% transition axiom for sink node out3
+% transition axiom for output node out3
 (all X all T (at(succ(X), T, out3) <-> ((at(X, T, s3) & goes(X, s3) & (switch(X, s3) = out3))))) # label(node_out3).
 
 % no train can be at any two nodes in the same time
