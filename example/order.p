@@ -13,3 +13,6 @@ fof(successor, axiom, (
 fof(predecessor, axiom, (
    (![X]: ((pred(succ(X)) = X) & (succ(pred(X)) = X)))
 )).
+fof(nonIdentity, axiom, (
+   (![X]: ((succ(X) != X) & (pred(X) != X)))
+)).
