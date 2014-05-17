@@ -155,7 +155,7 @@ public class ModelBuilder {
 					rightSide.add(conditions);
 				}
 				Formula nodeAxiom = q(eqv(at(succ(x), t, n), rightSide)).forAll(x, t);
-				nodeAxiom.label("node_" + n.getName()).comment("transition axiom for " + (node.isSink() ? "sink node " : "inner node ") + node.getName());
+				nodeAxiom.label("node_" + n.getName()).comment("transition axiom for " + (node.isSink() ? "output node " : "inner node ") + node.getName());
 				nodeAxioms.add(nodeAxiom);
 			}
 		}
@@ -272,7 +272,7 @@ public class ModelBuilder {
 
 					// path ready axiom : all X ready(X,p1) <=> (clock(X) = in & free(X,p1) & (exists T at(X,T,in) & gate(T) = out))
 					Formula readyAxiom = q(eqv(ready(x, p1), and(eq(clock(x), in), free(x, p1), q(and(at(x, t, in), eq(gate(t), out))).exists(t)))).forAll(x);
-					readyAxiom.label("ready_" + in.getName() + "_" + out.getName()).comment("the path ready axiom for " + pathName);
+					readyAxiom.label("ready_" + p1.getName()).comment("the path ready axiom for " + pathName);
 					controlAxioms.add(readyAxiom);
 
 					outgoingPaths.add(ready(x, p1));
@@ -287,8 +287,8 @@ public class ModelBuilder {
 			controlAxioms.add(null);
 		}
 
-		// the configuration control : all X,P conf(X,P) <=> (ready(X,P) | (conf(pred(X),P) & -free(X,P))
-		Formula confControl = q(eqv(conf(x, p), or(ready(x, p), and(conf(pred(x), p), neg(free(x, p)))))).forAll(x, p);
+		// the configuration control : all X,P (ready(X,P) | (conf(pred(X),P) & -free(X,P))) => conf(X,P)
+		Formula confControl = q(imp(or(ready(x, p), and(conf(pred(x), p), neg(free(x, p)))), conf(x, p))).forAll(x, p);
 		confControl.label("confControl").comment("controlling of the station configuration (i.e. the switches)");
 		controlAxioms.add(confControl);
 
