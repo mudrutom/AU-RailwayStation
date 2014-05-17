@@ -137,7 +137,7 @@ public class ModelBuilder {
 				inputNodeAxiom.label("node_" + in.getName()).comment("transition axiom for input node " + node.getName());
 				nodeAxioms.add(inputNodeAxiom);
 			} else {
-				// other node axioms : all X,T at(succ(X),T,n) <-> ((at(X,T,n) & -goes(X,n)) | (at(X,T,v1) & goes(X,T,v1) & open(X,v1) & switch(X,v1) = n) | .... )
+				// other node axioms : all X,T at(succ(X),T,n) <-> ((at(X,T,n) & -goes(X,n)) | (at(X,T,v1) & goes(X,v1) & open(X,v1) & switch(X,v1) = n) | .... )
 				Constant n = nodeCon(node);
 				Disjunction rightSide = or();
 				if (!node.isSink()) {
@@ -173,7 +173,8 @@ public class ModelBuilder {
 		// add the path axioms
 		controlAxioms.addAll(buildPathAxioms());
 		// add the signal control axioms
-		controlAxioms.addAll(buildSignalControlAxioms());
+		controlAxioms.addAll(buildControlAxioms());
+		controlAxioms.add(null);
 		// add the clock axioms
 		controlAxioms.addAll(buildClockAxioms());
 
@@ -254,35 +255,44 @@ public class ModelBuilder {
 		return pathAxioms;
 	}
 
-	/** Builds axioms for controlling the input node signals. */
-	private List<Formula> buildSignalControlAxioms() {
-		final Variable x = var("x"), t = var("t");
-		final List<Formula> signalAxioms = new LinkedList<Formula>();
+	/** Builds axioms for controlling the input node signals and station switches. */
+	private List<Formula> buildControlAxioms() {
+		final Variable x = var("x"), t = var("t"), p = var("p");
+		final List<Formula> controlAxioms = new LinkedList<Formula>();
 
 		for (Node node : graph.getSources()) {
 			Constant in = nodeCon(node);
+			Disjunction outgoingPaths = or();
 
 			for (Node sink : graph.getSinks()) {
-				// open the signal : all X,T (clock(X) = in & at(X,T,in) & gate(T) = out & ((conf(X,p1) & free(X,p1)) | ....)) => open(X,in)
-				Disjunction paths = or();
-				for (Path path : graphPaths.getPaths(node, sink)) {
-					paths.add(and(conf(x, pathCon(path)), free(x, pathCon(path))));
-				}
 				Constant out = nodeCon(sink);
-				Formula openAxiom = q(imp(and(eq(clock(x), in), at(x, t, in), eq(gate(t), out), paths), open(x, in))).forAll(x, t);
-				openAxiom.label("open_" + in.getName() + "_" + out.getName()).comment("open the signal " + node.getName() + " for a path to " + sink.getName());
-				signalAxioms.add(openAxiom);
+				for (Path path : graphPaths.getPaths(node, sink)) {
+					Constant p1 = pathCon(path);
+					String pathName = String.format("(%s->%s)#%d", path.getStart().getName(), path.getEnd().getName(), path.getIndex());
+
+					// path ready axiom : all X,T ready(X,p1) <=> (clock(X) = in & at(X,T,in) & gate(T) = out & free(X,p1))
+					Formula readyAxiom = q(eqv(ready(x, p1), and(eq(clock(x), in), at(x, t, in), eq(gate(t), out), free(x, p1)))).forAll(x, t);
+					readyAxiom.label("ready_" + in.getName() + "_" + out.getName()).comment("the path ready axiom for " + pathName);
+					controlAxioms.add(readyAxiom);
+
+					outgoingPaths.add(ready(x, p1));
+				}
 			}
 
-			// close the signal : all X,T (at(pred(X),T,in) & open(X,in) & -at(X,T,in) => -open(X,in)
-			Formula closeAxiom = q(imp(and(at(pred(x), t, in), open(x, in), neg(at(x, t, in))), neg(open(x, in)))).forAll(x, t);
-			closeAxiom.label("close_" + in.getName()).comment("close the signal " + node.getName() + " when a train leaves");
-			signalAxioms.add(closeAxiom);
+			// the signal control : all X open(X,in) <=> (ready(X,p1) | ready(X,p2) | .... )
+			Formula openAxiom = q(eqv(open(x, in), outgoingPaths)).forAll(x);
+			openAxiom.label("open_" + in.getName()).comment("open the signal " + node.getName() + " when some outgoing path is ready");
+			controlAxioms.add(openAxiom);
 
-			signalAxioms.add(null);
+			controlAxioms.add(null);
 		}
 
-		return signalAxioms;
+		// the configuration control : all X,P conf(X,P) <=> (ready(X,P) | (conf(pred(X),P) & -free(X,P))
+		Formula confControl = q(eqv(conf(x, p), or(ready(x, p), and(conf(pred(x), p), neg(free(x, p)))))).forAll(x, p);
+		confControl.label("confControl").comment("controlling of the station configuration (i.e. the switches)");
+		controlAxioms.add(confControl);
+
+		return controlAxioms;
 	}
 
 	/** Builds axioms for the control clock. */

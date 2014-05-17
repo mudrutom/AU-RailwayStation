@@ -59,6 +59,10 @@ public class DomainFactory extends Factory {
 		return new PrFree(time, path);
 	}
 
+	public static PrReady ready(Term time, Term path) {
+		return new PrReady(time, path);
+	}
+
 	public static PrLess less(Term i, Term j) {
 		return new PrLess(i, j);
 	}
