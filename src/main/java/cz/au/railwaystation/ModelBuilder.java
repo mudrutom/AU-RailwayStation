@@ -313,13 +313,14 @@ public class ModelBuilder {
 		clockOptionsAxiom.label("clockOptions").comment("the control clock has to be in one of the input nodes");
 		clockAxioms.add(clockOptionsAxiom);
 
-		// clock tics : all X (clock(X) = in1) <=> (clock(succ(X) = in2) ....
-		final Formula clockTic = q(eqv(eq(clock(x), nodeCon(sources.get(sources.size() - 1))), eq(clock(succ(x)), nodeCon(sources.get(0))))).forAll(x);
+		// clock tics : all X (succ(X) != X) -> (clock(succ(X)) = in2) <=> (clock(X = in1) ....
+		final Constant first = nodeCon(sources.get(0)), last = nodeCon(sources.get(sources.size() - 1));
+		final Formula clockTic = q(imp(neq(succ(x), x), eqv(eq(clock(succ(x)), first), eq(clock(x), last)))).forAll(x);
 		clockTic.label("clockTic").comment("the sequence of tics of the control clock");
 		clockAxioms.add(clockTic);
 		for (int i = 0, size = sources.size() - 1; i < size; i++) {
 			Constant now = nodeCon(sources.get(i)), next = nodeCon(sources.get(i + 1));
-			clockAxioms.add(q(eqv(eq(clock(x), now), eq(clock(succ(x)), next))).forAll(x).label("clockTic_" + i));
+			clockAxioms.add(q(imp(neq(succ(x), x), eqv(eq(clock(succ(x)), next), eq(clock(x), now)))).forAll(x).label("clockTic_" + i));
 		}
 
 		return clockAxioms;
