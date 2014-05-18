@@ -11,7 +11,7 @@ import static com.google.common.base.Preconditions.checkState;
 
 public class DomainFactory extends Factory {
 
-	public static final String ERR_MSG = "USE_CONS is true";
+	public static final String ERR_MSG = "USE_CONS is false";
 
 	private static boolean USE_CONS = true;
 
@@ -27,7 +27,7 @@ public class DomainFactory extends Factory {
 	}
 
 	public static Predicate at(Term time, Term train, Variable node) {
-		checkState(!USE_CONS, ERR_MSG);
+		checkState(USE_CONS, ERR_MSG);
 		return new Predicate("at", time, train, node);
 	}
 
@@ -37,7 +37,7 @@ public class DomainFactory extends Factory {
 	}
 
 	public static Predicate enter(Term time, Term train, Variable node) {
-		checkState(!USE_CONS, ERR_MSG);
+		checkState(USE_CONS, ERR_MSG);
 		return new Predicate("enter", time, train, node);
 	}
 
@@ -47,7 +47,7 @@ public class DomainFactory extends Factory {
 	}
 
 	public static Predicate goes(Term time, Variable node) {
-		checkState(!USE_CONS, ERR_MSG);
+		checkState(USE_CONS, ERR_MSG);
 		return new Predicate("goes", time, node);
 	}
 
@@ -57,7 +57,7 @@ public class DomainFactory extends Factory {
 	}
 
 	public static Predicate open(Term time, Variable node) {
-		checkState(!USE_CONS, ERR_MSG);
+		checkState(USE_CONS, ERR_MSG);
 		return new Predicate("open", time, node);
 	}
 
@@ -67,7 +67,7 @@ public class DomainFactory extends Factory {
 	}
 
 	public static Function swtch(Term time, Variable node) {
-		checkState(!USE_CONS, ERR_MSG);
+		checkState(USE_CONS, ERR_MSG);
 		return new Function("switch", time, node);
 	}
 
@@ -81,7 +81,7 @@ public class DomainFactory extends Factory {
 	}
 
 	public static Predicate conf(Term time, Variable path) {
-		checkState(!USE_CONS, ERR_MSG);
+		checkState(USE_CONS, ERR_MSG);
 		return new Predicate("conf", time, path);
 	}
 
@@ -91,7 +91,7 @@ public class DomainFactory extends Factory {
 	}
 
 	public static Predicate free(Term time, Variable path) {
-		checkState(!USE_CONS, ERR_MSG);
+		checkState(USE_CONS, ERR_MSG);
 		return new Predicate("free", time, path);
 	}
 
@@ -101,7 +101,7 @@ public class DomainFactory extends Factory {
 	}
 
 	public static Predicate ready(Term time, Variable path) {
-		checkState(!USE_CONS, ERR_MSG);
+		checkState(USE_CONS, ERR_MSG);
 		return new Predicate("ready", time, path);
 	}
 
