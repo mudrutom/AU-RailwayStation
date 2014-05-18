@@ -24,7 +24,7 @@ public class Factory {
 		return new Predicate(name);
 	}
 
-	public static Negation neg(Formula formula) {
+	public static Negation not(Formula formula) {
 		return new Negation(formula);
 	}
 

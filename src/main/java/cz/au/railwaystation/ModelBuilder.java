@@ -123,22 +123,27 @@ public class ModelBuilder {
 
 	/** Builds axioms defining the transitions between nodes. */
 	private List<Formula> buildNodeTransitionAxioms() {
-		final Variable x = var("x"), t = var("t");
+		final Variable x = var("x"), t = var("t"), t1 = var("t1"), t2 = var("t2");
 
 		final List<Formula> nodeAxioms = new LinkedList<Formula>();
 		for (Node node : nodes) {
 			if (node.isSource()) {
-				// input node axioms : all X,T at(succ(X),T,in) <-> (enter(X,T,in) | (at(X,T,in) & (-goes(X,in) | -open(X,in)))) ....
+				// input node axioms : all X,T at(succ(X),T,in) <-> (enter(X,T,in) | (at(X,T,in) & (-goes(X,in) | -open(X,in))))
 				Constant in = nodeCon(node);
-				Formula inputNodeAxiom = q(eqv(at(succ(x), t, in), or(enter(x, t, in), and(at(x, t, in), or(neg(goes(x, in)), neg(open(x, in))))))).forAll(x, t);
+				Formula inputNodeAxiom = q(eqv(at(succ(x), t, in), or(enter(x, t, in), and(at(x, t, in), or(not(goes(x, in)), not(open(x, in))))))).forAll(x, t);
 				inputNodeAxiom.label("node_" + in.getName()).comment("transition axiom for input node " + node.getName());
 				nodeAxioms.add(inputNodeAxiom);
+
+				// entrance axiom : all X,T1,T2 (T1 != T2 & at(X,T1,in)) -> -at(X,T2,in)
+				Formula entranceAxiom = q(imp(and(neq(t1, t2), at(x, t1, in)), not(at(x, t2, in)))).forAll(x, t1, t2);
+				entranceAxiom.label("entrance_" + in.getName()).comment("entrance axiom for input node " + node.getName());
+				nodeAxioms.add(entranceAxiom);
 			} else {
 				// other node axioms : all X,T at(succ(X),T,n) <-> ((at(X,T,n) & -goes(X,n)) | (at(X,T,v1) & goes(X,v1) & open(X,v1) & switch(X,v1) = n) | .... )
 				Constant n = nodeCon(node);
 				Disjunction rightSide = or();
 				if (!node.isSink()) {
-					rightSide.add(and(at(x, t, n), neg(goes(x, n))));
+					rightSide.add(and(at(x, t, n), not(goes(x, n))));
 				}
 				for (Node parent : node.getParents()) {
 					Constant parentCon = nodeCon(parent);
@@ -226,7 +231,7 @@ public class ModelBuilder {
 			}
 			Conjunction rightSide = and();
 			for (Node node : freeNodes) {
-				rightSide.add(neg(at(x, t, nodeCon(node))));
+				rightSide.add(not(at(x, t, nodeCon(node))));
 			}
 			Formula pathFree = q(eqv(free(x, p), q(rightSide).forAll(t))).forAll(x);
 			pathFree.label("free_" + p.getName()).comment("free path axiom for " + pathName);
@@ -271,12 +276,12 @@ public class ModelBuilder {
 					Conjunction ready = and(ready(x, p));
 					if (i > 0) {
 						for (Path prev : pathList.subList(0, i)) {
-							ready.add(neg(ready(x, pathCon(prev))));
+							ready.add(not(ready(x, pathCon(prev))));
 						}
 					}
 
 					// the configuration control : all X ((ready(X,p) & -ready(X,prev) & .... ) | (conf(X,p) & -free(X,p))) => conf(succ(X),p)
-					Formula confAxiom = q(imp(or(ready, and(conf(x, p), neg(free(x, p)))), conf(succ(x), p))).forAll(x);
+					Formula confAxiom = q(imp(or(ready, and(conf(x, p), not(free(x, p)))), conf(succ(x), p))).forAll(x);
 					confAxiom.label("conf_" + p.getName()).comment("control the switch configuration for " + getPathName(path));
 					controlAxioms.add(confAxiom);
 

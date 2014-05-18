@@ -118,7 +118,7 @@ public class Tests {
 		final String result1_ladr = formula1.printFormula(new StringBuilder(), OutputFormat.LADR).toString();
 		assertEquals(FORMULA_1_LADR, result1_ladr);
 
-		final Formula formula2 = q(eqv(pr("is", x), neg(or(pr("is", a), pr("is", fn("fun", b, c)), pr("is", d))))).exists(x);
+		final Formula formula2 = q(eqv(pr("is", x), not(or(pr("is", a), pr("is", fn("fun", b, c)), pr("is", d))))).exists(x);
 		formula2.label("testing");
 
 		final String result2_tptp = formula2.printFormula(new StringBuilder(), OutputFormat.TPTP).toString();

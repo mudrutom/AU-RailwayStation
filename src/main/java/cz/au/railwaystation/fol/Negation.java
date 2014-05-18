@@ -43,6 +43,6 @@ public class Negation extends Formula {
 
 	@Override
 	public String toString() {
-		return String.format("neg[%s]", formula);
+		return String.format("not[%s]", formula);
 	}
 }
