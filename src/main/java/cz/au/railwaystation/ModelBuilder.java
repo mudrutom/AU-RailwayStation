@@ -1,6 +1,7 @@
 package cz.au.railwaystation;
 
 import com.google.common.collect.Lists;
+import cz.au.railwaystation.domain.DomainFactory;
 import cz.au.railwaystation.dot.Graph;
 import cz.au.railwaystation.dot.GraphPaths;
 import cz.au.railwaystation.dot.GraphUtil;
@@ -34,6 +35,7 @@ public class ModelBuilder {
 	private final File outputFolder;
 
 	private OutputFormat format = OutputFormat.LADR;
+	private boolean useConsAsParams = true;
 
 	private GraphPaths graphPaths;
 
@@ -51,6 +53,11 @@ public class ModelBuilder {
 
 	public void setFormat(OutputFormat format) {
 		this.format = checkNotNull(format);
+	}
+
+	public void useConstantsAsParameters(boolean use) {
+		useConsAsParams = use;
+		DomainFactory.useConstantsAsParameters(useConsAsParams);
 	}
 
 	private Constant nodeCon(Node node) {
@@ -73,6 +80,7 @@ public class ModelBuilder {
 		for (Path path : paths) {
 			pathCons.put(path, con(String.format("%s_%s_%d", path.getStart().getName(), path.getEnd().getName(), path.getIndex())));
 		}
+		DomainFactory.useConstantsAsParameters(useConsAsParams);
 	}
 
 	/** Axioms for the layout of the given railway station. */
@@ -80,38 +88,39 @@ public class ModelBuilder {
 		final Variable x = var("x"), y = var("y"), t = var("t"), n = var("n"), n1 = var("n1"), n2 = var("n2");
 
 		final List<Formula> layoutAxioms = new LinkedList<Formula>();
-		// add the node domain axioms
-		layoutAxioms.addAll(buildNodeDomainAxioms());
-		layoutAxioms.add(null);
 		// add the node transition axioms
 		layoutAxioms.addAll(buildNodeTransitionAxioms());
 		layoutAxioms.add(null);
 
-		// train singular location axiom : all X,T,N1,N2 (at(X,T,N1) & at(X,T,N2)) => (N1 = N2)
-//		final Formula singularTrainLocation = q(imp(and(at(x, t, n1), at(x, t, n2)), eq(n1, n2))).forAll(x, t, n1, n2);
-//		singularTrainLocation.label("singularTrainLocation").comment("no train can be at any two nodes in the same time");
-//		layoutAxioms.add(singularTrainLocation);
+		// add the node domain axioms when using the constants as params
+		if (useConsAsParams) {
+			// nodes all-different : (in1 != in2 & in1 != v1 & .... )
+			final Conjunction nodesAllDiff = and();
+			for (int i = 0, size = nodes.size(); i < size; i++) {
+				for (int j = i + 1; j < size; j++) {
+					nodesAllDiff.add(neq(nodeCon(nodes.get(i)), nodeCon(nodes.get(j))));
+				}
+			}
+			nodesAllDiff.label("nodesAllDiff").comment("all the node constants need to be different");
+			layoutAxioms.add(nodesAllDiff);
 
-		// train driver goes axiom : all X,T,N at(X,T,N) => (exists Y ((X = Y | less(X,Y)) & goes(Y,N)))
-//		final Formula trainDriverGoes = q(imp(at(x, t, n), q(and(or(eq(x, y), less(x, y)), goes(y, n))).exists(y))).forAll(x, t, n);
-//		trainDriverGoes.label("trainDriverGoes").comment("the train driver has to go eventually");
-//		layoutAxioms.add(trainDriverGoes);
+			// train singular location axiom : all X,T,N1,N2 (at(X,T,N1) & at(X,T,N2)) => (N1 = N2)
+			final Formula singularTrainLocation = q(imp(and(at(x, t, n1), at(x, t, n2)), eq(n1, n2))).forAll(x, t, n1, n2);
+			singularTrainLocation.label("singularTrainLocation").comment("no train can be at any two nodes in the same time");
+			layoutAxioms.add(singularTrainLocation);
+			layoutAxioms.add(null);
+		}
+
+		if (useConsAsParams) {
+			// train driver goes axiom : all X,T,N at(X,T,N) => (exists Y ((X = Y | less(X,Y)) & goes(Y,N)))
+			final Formula trainDriverGoes = q(imp(at(x, t, n), q(and(or(eq(x, y), less(x, y)), goes(y, n))).exists(y))).forAll(x, t, n);
+			trainDriverGoes.label("trainDriverGoes").comment("the train driver has to go eventually");
+			layoutAxioms.add(trainDriverGoes);
+		} else {
+			// TODO static variant of the train driver axiom
+		}
 
 		exportAxioms(layoutAxioms, "layout");
-	}
-
-	/** Builds axioms for the node constants, i.e. allDiff and node predicate. */
-	private List<Formula> buildNodeDomainAxioms() {
-		// nodes all-different : (in1 != in2 & in1 != v1 & .... )
-		final Conjunction nodesAllDiff = and();
-		for (int i = 0, size = nodes.size(); i < size; i++) {
-			for (int j = i + 1; j < size; j++) {
-				nodesAllDiff.add(neq(nodeCon(nodes.get(i)), nodeCon(nodes.get(j))));
-			}
-		}
-		nodesAllDiff.label("nodesAllDiff").comment("all the node constants need to be different");
-
-		return Arrays.asList((Formula) nodesAllDiff);
 	}
 
 	/** Builds axioms defining the transitions between nodes. */
@@ -157,9 +166,20 @@ public class ModelBuilder {
 	public void createStationControlAxioms() throws IOException {
 		final List<Formula> controlAxioms = new LinkedList<Formula>();
 
-		// add the node domain axioms
-		controlAxioms.addAll(buildPathDomainAxioms());
-		controlAxioms.add(null);
+		// add the path domain axioms when using the constants as params
+		if (useConsAsParams) {
+			// path all-different : (p1 != p2 & p1 != p3 & .... )
+			final Conjunction pathAllDiff = and();
+			for (int i = 0, size = paths.size(); i < size; i++) {
+				for (int j = i + 1; j < size; j++) {
+					pathAllDiff.add(neq(pathCon(paths.get(i)), pathCon(paths.get(j))));
+				}
+			}
+			pathAllDiff.label("pathAllDiff").comment("all the path constants need to be different");
+			controlAxioms.add(pathAllDiff);
+			controlAxioms.add(null);
+		}
+
 		// add the path axioms
 		controlAxioms.addAll(buildPathAxioms());
 		// add the signal control axioms
@@ -169,20 +189,6 @@ public class ModelBuilder {
 		controlAxioms.addAll(buildClockAxioms());
 
 		exportAxioms(controlAxioms, "control");
-	}
-
-	/** Builds axioms for the path constants, i.e. allDiff and path predicate. */
-	private List<Formula> buildPathDomainAxioms() {
-		// path all-different : (p1 != p2 & p1 != p3 & .... )
-		final Conjunction pathAllDiff = and();
-		for (int i = 0, size = paths.size(); i < size; i++) {
-			for (int j = i + 1; j < size; j++) {
-				pathAllDiff.add(neq(pathCon(paths.get(i)), pathCon(paths.get(j))));
-			}
-		}
-		pathAllDiff.label("pathAllDiff").comment("all the path constants need to be different");
-
-		return Arrays.asList((Formula) pathAllDiff);
 	}
 
 	/** Builds axioms defining the possible paths through the station. */
@@ -267,10 +273,14 @@ public class ModelBuilder {
 			controlAxioms.add(null);
 		}
 
-		// the configuration control : all X,P (ready(X,P) | (conf(pred(X),P) & -free(X,P))) => conf(X,P)
-//		Formula confControl = q(imp(or(ready(x, p), and(conf(pred(x), p), neg(free(x, p)))), conf(x, p))).forAll(x, p);
-//		confControl.label("confControl").comment("controlling of the station configuration (i.e. the switches)");
-//		controlAxioms.add(confControl);
+		if (useConsAsParams) {
+			// the configuration control : all X,P (ready(X,P) | (conf(pred(X),P) & -free(X,P))) => conf(X,P)
+			Formula confControl = q(imp(or(ready(x, p), and(conf(pred(x), p), neg(free(x, p)))), conf(x, p))).forAll(x, p);
+			confControl.label("confControl").comment("controlling of the station configuration (i.e. the switches)");
+			controlAxioms.add(confControl);
+		} else {
+			// TODO static variant of the conf control axiom
+		}
 
 		return controlAxioms;
 	}
