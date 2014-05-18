@@ -88,14 +88,14 @@ public class ModelBuilder {
 		layoutAxioms.add(null);
 
 		// train singular location axiom : all X,T,N1,N2 (at(X,T,N1) & at(X,T,N2)) => (N1 = N2)
-		final Formula singularTrainLocation = q(imp(and(at(x, t, n1), at(x, t, n2)), eq(n1, n2))).forAll(x, t, n1, n2);
-		singularTrainLocation.label("singularTrainLocation").comment("no train can be at any two nodes in the same time");
-		layoutAxioms.add(singularTrainLocation);
+//		final Formula singularTrainLocation = q(imp(and(at(x, t, n1), at(x, t, n2)), eq(n1, n2))).forAll(x, t, n1, n2);
+//		singularTrainLocation.label("singularTrainLocation").comment("no train can be at any two nodes in the same time");
+//		layoutAxioms.add(singularTrainLocation);
 
 		// train driver goes axiom : all X,T,N at(X,T,N) => (exists Y ((X = Y | less(X,Y)) & goes(Y,N)))
-		final Formula trainDriverGoes = q(imp(at(x, t, n), q(and(or(eq(x, y), less(x, y)), goes(y, n))).exists(y))).forAll(x, t, n);
-		trainDriverGoes.label("trainDriverGoes").comment("the train driver has to go eventually");
-		layoutAxioms.add(trainDriverGoes);
+//		final Formula trainDriverGoes = q(imp(at(x, t, n), q(and(or(eq(x, y), less(x, y)), goes(y, n))).exists(y))).forAll(x, t, n);
+//		trainDriverGoes.label("trainDriverGoes").comment("the train driver has to go eventually");
+//		layoutAxioms.add(trainDriverGoes);
 
 		exportAxioms(layoutAxioms, "layout");
 	}
@@ -268,9 +268,9 @@ public class ModelBuilder {
 		}
 
 		// the configuration control : all X,P (ready(X,P) | (conf(pred(X),P) & -free(X,P))) => conf(X,P)
-		Formula confControl = q(imp(or(ready(x, p), and(conf(pred(x), p), neg(free(x, p)))), conf(x, p))).forAll(x, p);
-		confControl.label("confControl").comment("controlling of the station configuration (i.e. the switches)");
-		controlAxioms.add(confControl);
+//		Formula confControl = q(imp(or(ready(x, p), and(conf(pred(x), p), neg(free(x, p)))), conf(x, p))).forAll(x, p);
+//		confControl.label("confControl").comment("controlling of the station configuration (i.e. the switches)");
+//		controlAxioms.add(confControl);
 
 		return controlAxioms;
 	}
