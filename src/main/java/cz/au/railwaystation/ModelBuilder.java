@@ -102,8 +102,6 @@ public class ModelBuilder {
 
 	/** Builds axioms for the node constants, i.e. allDiff and node predicate. */
 	private List<Formula> buildNodeDomainAxioms() {
-		final Variable n = var("n");
-
 		// nodes all-different : (in1 != in2 & in1 != v1 & .... )
 		final Conjunction nodesAllDiff = and();
 		for (int i = 0, size = nodes.size(); i < size; i++) {
@@ -113,15 +111,7 @@ public class ModelBuilder {
 		}
 		nodesAllDiff.label("nodesAllDiff").comment("all the node constants need to be different");
 
-		// node predicate : all N node(N) <=> (N = in1 | N = in2 | .... )
-		final Disjunction nodeDomain = or();
-		for (Node node : nodes) {
-			nodeDomain.add(eq(n, nodeCon(node)));
-		}
-		final Formula nodePredicate = q(eqv(node(n), nodeDomain)).forAll(n);
-		nodePredicate.label("nodePredicate").comment("all and only the node constants are nodes");
-
-		return Arrays.asList(nodesAllDiff, nodePredicate);
+		return Arrays.asList((Formula) nodesAllDiff);
 	}
 
 	/** Builds axioms defining the transitions between nodes. */
@@ -183,8 +173,6 @@ public class ModelBuilder {
 
 	/** Builds axioms for the path constants, i.e. allDiff and path predicate. */
 	private List<Formula> buildPathDomainAxioms() {
-		final Variable p = var("p");
-
 		// path all-different : (p1 != p2 & p1 != p3 & .... )
 		final Conjunction pathAllDiff = and();
 		for (int i = 0, size = paths.size(); i < size; i++) {
@@ -194,15 +182,7 @@ public class ModelBuilder {
 		}
 		pathAllDiff.label("pathAllDiff").comment("all the path constants need to be different");
 
-		// path predicate : all P node(P) <=> (P = p1 | P = p2 | .... )
-		final Disjunction pathDomain = or();
-		for (Path path : paths) {
-			pathDomain.add(eq(p, pathCon(path)));
-		}
-		final Formula pathPredicate = q(eqv(path(p), pathDomain)).forAll(p);
-		pathPredicate.label("pathPredicate").comment("all and only the path constants are paths");
-
-		return Arrays.asList(pathAllDiff, pathPredicate);
+		return Arrays.asList((Formula) pathAllDiff);
 	}
 
 	/** Builds axioms defining the possible paths through the station. */
