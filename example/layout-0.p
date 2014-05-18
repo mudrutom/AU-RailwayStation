@@ -2,14 +2,14 @@
 fof(nodesAllDiff, axiom, (
    ((in1 != v1) & (in1 != out1) & (in1 != out2) & (v1 != out1) & (v1 != out2) & (out1 != out2))
 )).
-% all and only the node constants are nodes
-fof(nodePredicate, axiom, (
-   (![N]: (node(N) <=> ((N = in1) | (N = v1) | (N = out1) | (N = out2))))
-)).
 
 % transition axiom for input node in1
 fof(node_in1, axiom, (
    (![X]: ![T]: (at(succ(X), T, in1) <=> (enter(X, T, in1) | (at(X, T, in1) & (~goes(X, in1) | ~open(X, in1))))))
+)).
+% entrance axiom for input node in1
+fof(entrance_in1, axiom, (
+   (![X]: ![T1]: ![T2]: (((T1 != T2) & at(X, T1, in1)) => ~at(X, T2, in1)))
 )).
 % transition axiom for inner node v1
 fof(node_v1, axiom, (
