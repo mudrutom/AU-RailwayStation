@@ -13,6 +13,7 @@ import cz.au.railwaystation.fol.Disjunction;
 import cz.au.railwaystation.fol.Formula;
 import cz.au.railwaystation.fol.OutputFormat;
 import cz.au.railwaystation.fol.Variable;
+import org.apache.commons.io.IOUtils;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -371,18 +372,20 @@ public class ModelBuilder {
 			case TPTP: filename += ".p"; break;
 			case LADR: filename += ".p9"; break;
 		}
-		final BufferedWriter layout = new BufferedWriter(new FileWriter(new File(outputFolder, filename)));
+
+		BufferedWriter output = null;
 		try {
+			output = new BufferedWriter(new FileWriter(new File(outputFolder, filename)));
 			for (Formula axiom : axioms) {
 				if (axiom == null) {
-					layout.newLine();
+					output.newLine();
 				} else {
-					axiom.printFormula(layout, format);
+					axiom.printFormula(output, format);
 				}
 			}
-			layout.flush();
-		} catch (IOException e) {
-			layout.close();
+			output.flush();
+		} finally {
+			IOUtils.closeQuietly(output);
 		}
 	}
 

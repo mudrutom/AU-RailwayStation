@@ -11,7 +11,7 @@ import static com.google.common.base.Preconditions.checkState;
 
 public class DomainFactory extends Factory {
 
-	public static final String ERR_MSG = "USE_CONS is false";
+	private static final String ERR_MSG = "USE_CONS is false";
 
 	private static boolean USE_CONS = true;
 

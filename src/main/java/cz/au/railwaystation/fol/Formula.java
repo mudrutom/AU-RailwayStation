@@ -30,8 +30,8 @@ public abstract class Formula {
 		switch (format) {
 			case TPTP:
 				checkState(label != null);
-				prefix = String.format("fof(%s, axiom, (\n   ", label.replaceAll("[\\s]", "_"));
-				suffix = String.format("\n)).");
+				prefix = String.format("fof(%s, axiom, (%n   ", label.replaceAll("[\\s]", "_"));
+				suffix = String.format("%n)).");
 				break;
 			case LADR:
 				prefix = "";
@@ -41,9 +41,9 @@ public abstract class Formula {
 		}
 
 		if (comment != null) {
-			out.append("% ").append(comment).append(String.format("\n"));
+			out.append("% ").append(comment).append(String.format("%n"));
 		}
-		return print(out.append(prefix), format).append(suffix).append(String.format("\n"));
+		return print(out.append(prefix), format).append(suffix).append(String.format("%n"));
 	}
 
 	public abstract Appendable print(Appendable out, OutputFormat format) throws IOException;

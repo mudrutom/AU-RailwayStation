@@ -13,7 +13,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.Collections;
@@ -48,8 +47,7 @@ public class Tests {
 
 	@Test
 	public void testParser() throws IOException {
-		final BufferedReader input = new BufferedReader(new StringReader(GRAPH));
-		final Graph result = GraphUtil.parseGraph(input);
+		final Graph result = GraphUtil.parseGraph(new StringReader(GRAPH));
 
 		// build the graph
 		final Graph graph = new Graph()

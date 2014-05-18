@@ -1,9 +1,11 @@
 package cz.au.railwaystation.dot;
 
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.LineIterator;
 import org.apache.commons.lang3.StringUtils;
 
-import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
@@ -15,23 +17,25 @@ public class GraphUtil {
 
 	private GraphUtil() {}
 
-	public static Graph parseGraph(BufferedReader input) throws IOException {
+	public static Graph parseGraph(Reader input) throws IOException {
 		final Graph graph = new Graph();
 
-		String line;
-		while ((line = input.readLine()) != null) {
-			line = line.trim();
+		final LineIterator lines = IOUtils.lineIterator(input);
+		while (lines.hasNext()) {
+			String line = lines.nextLine().trim();
 			if (line.startsWith("}") || line.endsWith("{")) continue;
 
 			line = line.replaceAll("[;\\s]", "");
 			String[] nodes = StringUtils.split(line, "->");
-			int len = nodes.length - 1;
-			for (int i = 0; i < len; i++) {
+			for (int i = 0, len = nodes.length - 1; i < len; i++) {
 				graph.edge(nodes[i], nodes[i + 1]);
 			}
 		}
 
-		graph.analyze();
+		if (graph.getSources().isEmpty() || graph.getSinks().isEmpty()) {
+			throw new IOException("invalid input graph");
+		}
+
 		return graph;
 	}
 

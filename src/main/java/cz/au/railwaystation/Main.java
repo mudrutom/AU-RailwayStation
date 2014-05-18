@@ -4,25 +4,86 @@ import cz.au.railwaystation.dot.Graph;
 import cz.au.railwaystation.dot.GraphUtil;
 import cz.au.railwaystation.fol.OutputFormat;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 
 public class Main {
 
-    public static void main(String[] args) throws IOException {
+	public static final String USAGE = "USAGE: java -jar AU-RailwayStation.jar [-tptp] [-ladr] <station.dot> [<out_dir>]";
+	public static final OutputFormat DEFAULT = OutputFormat.TPTP;
 
-		final BufferedReader input = new BufferedReader(new FileReader("example/station-1.dot"));
-		final Graph graph = GraphUtil.parseGraph(input);
-		input.close();
+    public static void main(String[] args) {
+		final Arg arg = processArgs(args);
 
-		final ModelBuilder builder = new ModelBuilder(graph, new File("example"));
-		builder.setFormat(OutputFormat.TPTP);
+		// parse the input railway station
+		Graph graph = null;
+		try {
+			graph = GraphUtil.parseGraph(new FileReader(arg.input));
+		} catch (IOException e) {
+			exit(e);
+		}
+
+		// create the axioms for the given graph
+		final ModelBuilder builder = new ModelBuilder(graph, arg.outDir);
 		builder.useConstantsAsParameters(true);
-		builder.createStationLayoutAxioms();
-		builder.createStationControlAxioms();
+		builder.setFormat(arg.format);
+		try {
+			if (!arg.outDir.exists()) arg.outDir.mkdirs();
 
+			builder.createOrderAxioms();
+			builder.createStationLayoutAxioms();
+			builder.createStationControlAxioms();
+		} catch (IOException e) {
+			exit(e);
+		}
+
+		exit(null);
 	}
 
+	private static void exit(Exception e) {
+		if (e != null) {
+			System.err.println("An " + e.getClass().getSimpleName() + " has occurred: " + e.getMessage());
+			System.exit(1);
+		} else {
+			System.exit(0);
+		}
+	}
+
+	private static Arg processArgs(String[] args) {
+		if (args.length < 1 || args.length > 3) printUsage();
+
+		File input, output;
+		OutputFormat format = null;
+
+		if (args[0].startsWith("-") && args.length >= 2) {
+			if (args[0].equalsIgnoreCase("-tptp")) format = OutputFormat.TPTP;
+			else if (args[0].equalsIgnoreCase("-ladr")) format = OutputFormat.LADR;
+			else printUsage();
+			input = new File(args[1]);
+			output = (args.length >= 3) ? new File(args[2]) : input.getParentFile();
+		} else {
+			format = DEFAULT;
+			input = new File(args[0]);
+			output = (args.length >= 2) ? new File(args[1]) : input.getParentFile();
+		}
+
+		return new Arg(input, output, format);
+	}
+
+	private static void printUsage() {
+		System.out.println(USAGE);
+		System.exit(0);
+	}
+
+	private static final class Arg {
+		public File input, outDir;
+		public OutputFormat format;
+
+		private Arg(File input, File outDir, OutputFormat format) {
+			this.input = input;
+			this.outDir = outDir;
+			this.format = format;
+		}
+	}
 }
