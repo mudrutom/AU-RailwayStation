@@ -90,7 +90,6 @@ public class ModelBuilder {
 		final List<Formula> layoutAxioms = new LinkedList<Formula>();
 		// add the node transition axioms
 		layoutAxioms.addAll(buildNodeTransitionAxioms());
-		layoutAxioms.add(null);
 
 		// add the node domain axioms when using the constants as params
 		if (useConsAsParams) {
@@ -184,7 +183,6 @@ public class ModelBuilder {
 		controlAxioms.addAll(buildPathAxioms());
 		// add the signal control axioms
 		controlAxioms.addAll(buildControlAxioms());
-		controlAxioms.add(null);
 		// add the clock axioms
 		controlAxioms.addAll(buildClockAxioms());
 
@@ -198,7 +196,7 @@ public class ModelBuilder {
 
 		for (Path path : paths) {
 			Constant p = pathCon(path);
-			String pathName = String.format("(%s->%s)#%d", path.getStart().getName(), path.getEnd().getName(), path.getIndex());
+			String pathName = getPathName(path);
 
 			// switch configuration : all X conf(X,p) <=> (switch(X,n1) = n1 & switch(X,n2) = n3 & .... )
 			Conjunction switches = and();
@@ -243,27 +241,51 @@ public class ModelBuilder {
 
 	/** Builds axioms for controlling the input node signals and station switches. */
 	private List<Formula> buildControlAxioms() {
-		final Variable x = var("x"), t = var("t"), p = var("p");
+		final Variable x = var("x"), t = var("t");
 		final List<Formula> controlAxioms = new LinkedList<Formula>();
+
+		for (Node node : graph.getSources()) {
+			Constant in = nodeCon(node);
+			for (Node sink : graph.getSinks()) {
+				Constant out = nodeCon(sink);
+				for (Path path : graphPaths.getPaths(node, sink)) {
+					Constant p = pathCon(path);
+
+					// path ready axiom : all X ready(X,p) <=> (clock(X) = in & free(X,p) & (exists T at(X,T,in) & gate(T) = out))
+					Formula readyAxiom = q(eqv(ready(x, p), and(eq(clock(x), in), free(x, p), q(and(at(x, t, in), eq(gate(t), out))).exists(t)))).forAll(x);
+					readyAxiom.label("ready_" + p.getName()).comment("the path ready axiom for " + getPathName(path));
+					controlAxioms.add(readyAxiom);
+				}
+			}
+			controlAxioms.add(null);
+		}
 
 		for (Node node : graph.getSources()) {
 			Constant in = nodeCon(node);
 			Disjunction outgoingPaths = or();
 
 			for (Node sink : graph.getSinks()) {
-				Constant out = nodeCon(sink);
-				for (Path path : graphPaths.getPaths(node, sink)) {
-					Constant p1 = pathCon(path);
-					String pathName = String.format("(%s->%s)#%d", path.getStart().getName(), path.getEnd().getName(), path.getIndex());
+				List<Path> pathList = new ArrayList<Path>(graphPaths.getPaths(node, sink));
+				int i = 0;
+				for (Path path : pathList) {
+					Constant p = pathCon(path);
+					Conjunction ready = and(ready(x, p));
+					if (i > 0) {
+						for (Path prev : pathList.subList(0, i)) {
+							ready.add(neg(ready(x, pathCon(prev))));
+						}
+					}
 
-					// path ready axiom : all X ready(X,p1) <=> (clock(X) = in & free(X,p1) & (exists T at(X,T,in) & gate(T) = out))
-					Formula readyAxiom = q(eqv(ready(x, p1), and(eq(clock(x), in), free(x, p1), q(and(at(x, t, in), eq(gate(t), out))).exists(t)))).forAll(x);
-					readyAxiom.label("ready_" + p1.getName()).comment("the path ready axiom for " + pathName);
-					controlAxioms.add(readyAxiom);
+					// the configuration control : all X ((ready(X,p) & -ready(X,prev) & .... ) | (conf(pred(X),p) & -free(X,p))) => conf(X,p)
+					Formula confAxiom = q(imp(or(ready, and(conf(pred(x), p), neg(free(x, p)))), conf(x, p))).forAll(x);
+					confAxiom.label("conf_" + p.getName()).comment("control the switch configuration for " + getPathName(path));
+					controlAxioms.add(confAxiom);
 
-					outgoingPaths.add(ready(x, p1));
+					outgoingPaths.add(ready(x, p));
+					i++;
 				}
 			}
+			controlAxioms.add(null);
 
 			// the signal control : all X open(X,in) <=> (ready(X,p1) | ready(X,p2) | .... )
 			Formula openAxiom = q(eqv(open(x, in), outgoingPaths)).forAll(x);
@@ -271,15 +293,6 @@ public class ModelBuilder {
 			controlAxioms.add(openAxiom);
 
 			controlAxioms.add(null);
-		}
-
-		if (useConsAsParams) {
-			// the configuration control : all X,P (ready(X,P) | (conf(pred(X),P) & -free(X,P))) => conf(X,P)
-			Formula confControl = q(imp(or(ready(x, p), and(conf(pred(x), p), neg(free(x, p)))), conf(x, p))).forAll(x, p);
-			confControl.label("confControl").comment("controlling of the station configuration (i.e. the switches)");
-			controlAxioms.add(confControl);
-		} else {
-			// TODO static variant of the conf control axiom
 		}
 
 		return controlAxioms;
@@ -342,6 +355,10 @@ public class ModelBuilder {
 		nonIdentity.label("nonIdentity");
 
 		exportAxioms(Arrays.asList(antisymmetry, transitivity, totality, successor, predecessor, nonIdentity), "order");
+	}
+
+	private String getPathName(Path path) {
+		return String.format("(%s->%s)#%d", path.getStart().getName(), path.getEnd().getName(), path.getIndex());
 	}
 
 	private void exportAxioms(List<Formula> axioms, String filename) throws IOException {
