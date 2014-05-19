@@ -29,8 +29,6 @@ public class Main {
 		builder.useConstantsAsParameters(true);
 		builder.setFormat(arg.format);
 		try {
-			if (!arg.outDir.exists()) arg.outDir.mkdirs();
-
 			builder.createOrderAxioms();
 			builder.createStationLayoutAxioms();
 			builder.createStationControlAxioms();
@@ -66,6 +64,10 @@ public class Main {
 			format = DEFAULT;
 			input = new File(args[0]);
 			output = (args.length >= 2) ? new File(args[1]) : input.getParentFile();
+		}
+
+		if (output == null || (!output.exists() && !output.mkdirs())) {
+			output = new File(System.getProperty("user.dir"));
 		}
 
 		return new Arg(input, output, format);
