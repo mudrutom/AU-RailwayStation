@@ -20,7 +20,6 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
@@ -31,6 +30,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static cz.au.railwaystation.domain.DomainFactory.*;
 
 public class ModelBuilder {
+
+	private static final boolean USE_NON_IDENTITY = false;
 
 	private final Graph graph;
 	private final File outputFolder;
@@ -368,32 +369,41 @@ public class ModelBuilder {
 	/** Axioms for the linear ordering. */
 	public void createOrderAxioms() throws IOException {
 		final Variable x = var("x"), y = var("y"), z = var("z");
+		final LinkedList<Formula> orderAxioms = new LinkedList<Formula>();
 
 		// antisymmetry : all X,Y (less(X,Y) & less(Y,X)) => (X = Y)
 		final Formula antisymmetry = q(imp(and(less(x, y), less(y, x)), eq(x, y))).forAll(x, y);
 		antisymmetry.label("antisymmetry");
+		orderAxioms.add(antisymmetry);
 
 		// transitivity : all X,Y,Z (less(X,Y) & less(Y,Z)) => less(X,Z)
 		final Formula transitivity = q(imp(and(less(x, y), less(y, z)), less(x, y))).forAll(x, y, z);
 		transitivity.label("transitivity");
+		orderAxioms.add(transitivity);
 
 		// totality : all X,Y (less(X,Y) | less(Y,X))
 		final Formula totality = q(or(less(x, y), less(y, x))).forAll(x, y);
 		totality.label("totality");
+		orderAxioms.add(totality);
 
 		// successor : all X (less(X,succ(X)) & (all Y (less(Y,X) | less(succ(X),Y)))
 		final Formula successor = q(and(less(x, succ(x)), q(or(less(y, x), less(succ(x), y))).forAll(y))).forAll(x);
 		successor.label("successor");
+		orderAxioms.add(successor);
 
 		// predecessor : all X (pred(succ(X)) = X) & (succ(pred(X)) = X)
 		final Formula predecessor = q(and(eq(pred(succ(x)), x), eq(succ(pred(x)), x))).forAll(x);
 		predecessor.label("predecessor");
+		orderAxioms.add(predecessor);
 
-		// non-identity : all X (succ(X) != X) & (pred(X) != X)
-		final Formula nonIdentity = q(and(neq(succ(x), x), neq(pred(x), x))).forAll(x);
-		nonIdentity.label("nonIdentity");
+		if (USE_NON_IDENTITY) {
+			// non-identity : all X (succ(X) != X) & (pred(X) != X)
+			final Formula nonIdentity = q(and(neq(succ(x), x), neq(pred(x), x))).forAll(x);
+			nonIdentity.label("nonIdentity");
+			orderAxioms.add(nonIdentity);
+		}
 
-		exportAxioms(Arrays.asList(antisymmetry, transitivity, totality, successor, predecessor, nonIdentity), "order");
+		exportAxioms(orderAxioms, "order");
 	}
 
 	private String getPathName(Path path) {
