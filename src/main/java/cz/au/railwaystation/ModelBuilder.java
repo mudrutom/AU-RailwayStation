@@ -103,6 +103,9 @@ public class ModelBuilder {
 		// add the node transition axioms
 		layoutAxioms.addAll(buildNodeTransitionAxioms());
 		layoutAxioms.add(null);
+		// add the function domain axioms
+		layoutAxioms.addAll(buildFunctionDomainAxioms());
+		layoutAxioms.add(null);
 
 		// add the node domain axioms when using the constants as params
 		if (useConsAsParams) {
@@ -124,21 +127,18 @@ public class ModelBuilder {
 
 	/** Builds axioms defining the transitions between nodes. */
 	private List<Formula> buildNodeTransitionAxioms() {
-		final Variable x = var("x"), t = var("t"), t1 = var("t1"), t2 = var("t2");
+		final Variable x = var("x"), t = var("t"), r = var("r");
 
 		final List<Formula> nodeAxioms = new LinkedList<Formula>();
 		for (Node node : nodes) {
 			if (node.isSource()) {
-				// input node axioms : all X,T at(succ(X),T,in) <-> (enter(X,T,in) | (at(X,T,in) & (-goes(X,in) | -open(X,in))))
+				// input node axioms : all X,T at(succ(X),T,in) <-> ((enter(X,T,in) & (all R -at(X,R,in))) | (at(X,T,in) & (-goes(X,in) | -open(X,in))))
 				Constant in = nodeCon(node);
-				Formula inputNodeAxiom = q(eqv(at(succ(x), t, in), or(enter(x, t, in), and(at(x, t, in), or(not(goes(x, in)), not(open(x, in))))))).forAll(x, t);
+				Formula enters = and(enter(x, t, in), q(not(at(x, r, in))).forAll(r));
+				Formula stays = and(at(x, t, in), or(not(goes(x, in)), not(open(x, in))));
+				Formula inputNodeAxiom = q(eqv(at(succ(x), t, in), or(enters, stays))).forAll(x, t);
 				inputNodeAxiom.label("node_" + in.getName()).comment("transition axiom for input node " + node.getName());
 				nodeAxioms.add(inputNodeAxiom);
-
-				// entrance axiom : all X,T1,T2 (T1 != T2 & at(X,T1,in)) -> -at(X,T2,in)
-				Formula entranceAxiom = q(imp(and(neq(t1, t2), at(x, t1, in)), not(at(x, t2, in)))).forAll(x, t1, t2);
-				entranceAxiom.label("entrance_" + in.getName()).comment("entrance axiom for input node " + node.getName());
-				nodeAxioms.add(entranceAxiom);
 			} else {
 				// other node axioms : all X,T at(succ(X),T,n) <-> ((at(X,T,n) & -goes(X,n)) | (at(X,T,v1) & goes(X,v1) & open(X,v1) & switch(X,v1) = n) | .... )
 				Constant n = nodeCon(node);
@@ -164,6 +164,37 @@ public class ModelBuilder {
 		}
 
 		return nodeAxioms;
+	}
+
+	/** Axioms for the domains of gate() and switch() functions. */
+	private List<Formula> buildFunctionDomainAxioms() {
+		final Variable x = var("x"), t = var("t");
+		final LinkedList<Formula> domainAxioms = new LinkedList<Formula>();
+
+		// gate function domain : all T (gate(T) = out1 | gate(T) = out2 | .... )
+		final Disjunction gateDomain = or();
+		for (Node node : graph.getSinks()) {
+			gateDomain.add(eq(gate(t), nodeCon(node)));
+		}
+		final Formula gateDomainAxiom = q(gateDomain).forAll(t);
+		gateDomainAxiom.label("gateDomain").comment("the gate function domain axiom");
+		domainAxioms.add(gateDomainAxiom);
+
+		for (Node node : graph.getInnerNodes()) {
+			if (node.isSwitch()) {
+				// switch function domain : all X (switch(X,v) = v1 | switch(X,v) = v2 | .... )
+				Constant v = nodeCon(node);
+				Disjunction switchDomain = or();
+				for (Node child : node.getChildren()) {
+					switchDomain.add(eq(swtch(x, v), nodeCon(child)));
+				}
+				Formula switchDomainAxiom = q(switchDomain).forAll(x);
+				switchDomainAxiom.label("switch_" + v.getName()).comment("the switch function domain axiom for " + node.getName());
+				domainAxioms.add(switchDomainAxiom);
+			}
+		}
+
+		return domainAxioms;
 	}
 
 	/** Axioms for the control system of the given railway station. */
@@ -319,14 +350,16 @@ public class ModelBuilder {
 		clockOptionsAxiom.label("clockOptions").comment("the control clock has to be in one of the input nodes");
 		clockAxioms.add(clockOptionsAxiom);
 
-		// clock tics : all X (succ(X) != X) -> (clock(succ(X)) = in2) <=> (clock(X = in1) ....
-		final Constant first = nodeCon(sources.get(0)), last = nodeCon(sources.get(sources.size() - 1));
-		final Formula clockTic = q(imp(neq(succ(x), x), eqv(eq(clock(succ(x)), first), eq(clock(x), last)))).forAll(x);
-		clockTic.label("clockTic").comment("the sequence of tics of the control clock");
-		clockAxioms.add(clockTic);
-		for (int i = 0, size = sources.size() - 1; i < size; i++) {
-			Constant now = nodeCon(sources.get(i)), next = nodeCon(sources.get(i + 1));
-			clockAxioms.add(q(imp(neq(succ(x), x), eqv(eq(clock(succ(x)), next), eq(clock(x), now)))).forAll(x).label("clockTic_" + i));
+		if (sources.size() > 1) {
+			// clock tics : all X (succ(X) != X) -> (clock(succ(X)) = in2) <=> (clock(X = in1) ....
+			final Constant first = nodeCon(sources.get(0)), last = nodeCon(sources.get(sources.size() - 1));
+			final Formula clockTic = q(imp(neq(succ(x), x), eqv(eq(clock(succ(x)), first), eq(clock(x), last)))).forAll(x);
+			clockTic.label("clockTic").comment("the sequence of tics of the control clock");
+			clockAxioms.add(clockTic);
+			for (int i = 0, size = sources.size() - 1; i < size; i++) {
+				Constant now = nodeCon(sources.get(i)), next = nodeCon(sources.get(i + 1));
+				clockAxioms.add(q(imp(neq(succ(x), x), eqv(eq(clock(succ(x)), next), eq(clock(x), now)))).forAll(x).label("clockTic_" + i));
+			}
 		}
 
 		return clockAxioms;
