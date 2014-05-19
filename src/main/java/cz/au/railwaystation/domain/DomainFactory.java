@@ -41,14 +41,8 @@ public class DomainFactory extends Factory {
 		return new Predicate("enter", time, train, node);
 	}
 
-	public static Predicate goes(Term time, Constant node) {
-		final String name = USE_CONS ? "goes" : "goes_" + node.getName();
-		return USE_CONS ? new Predicate(name, time, node) : new Predicate(name, time);
-	}
-
-	public static Predicate goes(Term time, Variable node) {
-		checkState(USE_CONS, ERR_MSG);
-		return new Predicate("goes", time, node);
+	public static Predicate goes(Term time, Term train) {
+		return new Predicate("goes", time, train);
 	}
 
 	public static Predicate open(Term time, Constant node) {

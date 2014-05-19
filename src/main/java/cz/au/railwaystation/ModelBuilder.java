@@ -114,8 +114,8 @@ public class ModelBuilder {
 			singularTrainLocation.label("singularTrainLocation").comment("no train can be at any two nodes in the same time");
 			layoutAxioms.add(singularTrainLocation);
 
-			// train driver goes axiom : all X,T,N at(X,T,N) => (exists Y ((X = Y | less(X,Y)) & goes(Y,N)))
-			final Formula trainDriverGoes = q(imp(at(x, t, n), q(and(or(eq(x, y), less(x, y)), goes(y, n))).exists(y))).forAll(x, t, n);
+			// train driver goes axiom : all X,T at(X,T,N) => (exists Y (less(X,Y) & goes(Y,T)))
+			final Formula trainDriverGoes = q(imp(at(x, t, n), q(and(less(x, y), goes(y, t))).exists(y))).forAll(x, t, n);
 			trainDriverGoes.label("trainDriverGoes").comment("the train driver has to go eventually");
 			layoutAxioms.add(trainDriverGoes);
 		} else {
@@ -132,23 +132,23 @@ public class ModelBuilder {
 		final List<Formula> nodeAxioms = new LinkedList<Formula>();
 		for (Node node : nodes) {
 			if (node.isSource()) {
-				// input node axioms : all X,T at(succ(X),T,in) <-> ((enter(X,T,in) & (all R -at(X,R,in))) | (at(X,T,in) & (-goes(X,in) | -open(X,in))))
+				// input node axioms : all X,T at(succ(X),T,in) <-> ((enter(X,T,in) & (all R -at(X,R,in))) | (at(X,T,in) & (-goes(X,T) | -open(X,in))))
 				Constant in = nodeCon(node);
 				Formula enters = and(enter(x, t, in), q(not(at(x, r, in))).forAll(r));
-				Formula stays = and(at(x, t, in), or(not(goes(x, in)), not(open(x, in))));
+				Formula stays = and(at(x, t, in), or(not(goes(x, t)), not(open(x, in))));
 				Formula inputNodeAxiom = q(eqv(at(succ(x), t, in), or(enters, stays))).forAll(x, t);
 				inputNodeAxiom.label("node_" + in.getName()).comment("transition axiom for input node " + node.getName());
 				nodeAxioms.add(inputNodeAxiom);
 			} else {
-				// other node axioms : all X,T at(succ(X),T,n) <-> ((at(X,T,n) & -goes(X,n)) | (at(X,T,v1) & goes(X,v1) & open(X,v1) & switch(X,v1) = n) | .... )
+				// other node axioms : all X,T at(succ(X),T,n) <-> ((at(X,T,n) & -goes(X,T)) | (at(X,T,v1) & goes(X,T) & open(X,v1) & switch(X,v1) = n) | .... )
 				Constant n = nodeCon(node);
 				Disjunction rightSide = or();
 				if (!node.isSink()) {
-					rightSide.add(and(at(x, t, n), not(goes(x, n))));
+					rightSide.add(and(at(x, t, n), not(goes(x, t))));
 				}
 				for (Node parent : node.getParents()) {
 					Constant parentCon = nodeCon(parent);
-					Conjunction conditions = and(at(x, t, parentCon), goes(x, parentCon));
+					Conjunction conditions = and(at(x, t, parentCon), goes(x, t));
 					if (parent.isSource()) {
 						conditions.add(open(x, parentCon));
 					}
