@@ -4,13 +4,21 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 public abstract class Formula {
 
+	private String type = "axiom";
 	private String label = null;
 	private String comment = null;
+
+	public Formula type(String type) {
+		checkArgument(StringUtils.isNotBlank(type));
+		this.type = type;
+		return this;
+	}
 
 	public Formula label(String label) {
 		this.label = label;
@@ -30,7 +38,7 @@ public abstract class Formula {
 		switch (format) {
 			case TPTP:
 				checkState(label != null);
-				prefix = String.format("fof(%s, axiom, (%n   ", label.replaceAll("[\\s]", "_"));
+				prefix = String.format("fof(%s, %s, (%n   ", label.replaceAll("[\\s]", "_"), type);
 				suffix = String.format("%n)).");
 				break;
 			case LADR:

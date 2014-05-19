@@ -25,13 +25,24 @@ public class Main {
 		}
 
 		// create the axioms for the given graph
-		final ModelBuilder builder = new ModelBuilder(graph, arg.outDir);
-		builder.useConstantsAsParameters(true);
-		builder.setFormat(arg.format);
+		final ModelBuilder model = new ModelBuilder(graph, arg.outDir);
+		model.useConstantsAsParameters(true);
+		model.setFormat(arg.format);
 		try {
-			builder.createOrderAxioms();
-			builder.createStationLayoutAxioms();
-			builder.createStationControlAxioms();
+			model.createOrderAxioms();
+			model.createStationLayoutAxioms();
+			model.createStationControlAxioms();
+		} catch (IOException e) {
+			exit(e);
+		}
+
+		// create the proofs for the given graph
+		final ProofBuilder proofs = new ProofBuilder(graph, arg.outDir);
+		proofs.setFormat(arg.format);
+		try {
+			proofs.createDerailsProofs();
+			proofs.createCollisionsProofs();
+			proofs.createSignalsProofs();
 		} catch (IOException e) {
 			exit(e);
 		}
