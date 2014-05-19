@@ -3,4 +3,3 @@
 (all X all Y (less(X, Y) | less(Y, X))) # label(totality).
 (all X (less(X, succ(X)) & (all Y (less(Y, X) | less(succ(X), Y))))) # label(successor).
 (all X ((pred(succ(X)) = X) & (succ(pred(X)) = X))) # label(predecessor).
-(all X ((succ(X) != X) & (pred(X) != X))) # label(nonIdentity).

@@ -48,7 +48,3 @@ fof(open_in1, axiom, (
 fof(clockOptions, axiom, (
    (![X]: ((clock(X) = in1)))
 )).
-% the sequence of tics of the control clock
-fof(clockTic, axiom, (
-   (![X]: ((succ(X) != X) => ((clock(succ(X)) = in1) <=> (clock(X) = in1))))
-)).
