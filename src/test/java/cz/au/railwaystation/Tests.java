@@ -25,25 +25,25 @@ import static org.junit.Assert.assertEquals;
 @RunWith(JUnit4.class)
 public class Tests {
 
-	private static final String GRAPH =
-			"digraph GRAPH {\n" +
-			"	in -> v;\n" +
-			"	v -> out1;\n" +
-			"	v -> out2;\n" +
-			"}";
+	private static final String GRAPH = String.format(
+			"digraph GRAPH {%n" +
+			"	in -> v;%n" +
+			"	v -> out1;%n" +
+			"	v -> out2;%n" +
+			"}");
 
-	private static final String FORMULA_1_TPTP =
-			"fof(antisymmetry, axiom, (\n" +
-			"   (![X]: ![Y]: ((less(X, Y) & less(Y, X)) => (X = Y)))\n" +
-			")).\n";
-	private static final String FORMULA_1_LADR =
-			"(all X all Y ((less(X, Y) & less(Y, X)) -> (X = Y))) # label(antisymmetry).\n";
-	private static final String FORMULA_2_TPTP =
-			"fof(testing, axiom, (\n" +
-			"   (?[X]: (is(X) <=> ~(is(a) | is(fun(b, c)) | is(d))))\n" +
-			")).\n";
-	private static final String FORMULA_2_LADR =
-			"(exists X (is(X) <-> -(is(a) | is(fun(b, c)) | is(d)))) # label(testing).\n";
+	private static final String FORMULA_1_TPTP = String.format(
+			"fof(antisymmetry, axiom, (%n" +
+			"   (![X]: ![Y]: ((less(X, Y) & less(Y, X)) => (X = Y)))%n" +
+			")).%n");
+	private static final String FORMULA_1_LADR = String.format(
+			"(all X all Y ((less(X, Y) & less(Y, X)) -> (X = Y))) # label(antisymmetry).%n");
+	private static final String FORMULA_2_TPTP = String.format(
+			"fof(testing, axiom, (%n" +
+			"   (?[X]: (is(X) <=> ~(is(a) | is(fun(b, c)) | is(d))))%n" +
+			")).%n");
+	private static final String FORMULA_2_LADR = String.format(
+			"(exists X (is(X) <-> -(is(a) | is(fun(b, c)) | is(d)))) # label(testing).%n");
 
 	@Test
 	public void testParser() throws IOException {
